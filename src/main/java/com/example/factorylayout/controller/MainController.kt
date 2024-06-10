@@ -25,7 +25,7 @@ class MainController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryCreateView.fxml"))
         val root = loader.load<Any>() as Parent
         val scene = Scene(root)
-        stage.setScene(scene)
+        stage.scene = scene
         stage.show()
     }
 

@@ -2,6 +2,8 @@ module com.example.factorylayout {
     requires javafx.controls;
     requires javafx.fxml;
     requires kotlin.stdlib;
+    requires kotlinx.serialization.core;
+    requires kotlinx.serialization.json;
 
 
     opens com.example.factorylayout to javafx.fxml;
