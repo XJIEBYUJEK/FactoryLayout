@@ -1,12 +1,15 @@
 package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
+import com.example.factorylayout.SingletonData
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Insets
 import javafx.geometry.Pos
+import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.Button
@@ -40,6 +43,8 @@ class FactoryCreateController {
     lateinit var canvas: Canvas
 
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
+
+    private val data = SingletonData.getInstance()
 
     @FXML
     fun onCreateClick(event: ActionEvent) {
@@ -106,28 +111,38 @@ class FactoryCreateController {
     fun saveFactoryLayout(actionEvent: ActionEvent) {
 
         val factoryLayout = Factory(widthText.text.toInt(), lengthText.text.toInt(), coordinateList)
-
         val filenameTextField = TextField()
-        filenameTextField.promptText = "Filename"
         val insideSaveButton = Button()
-        insideSaveButton.text = "Save"
-        val vBox = VBox()
-        vBox.spacing = 5.0
-        vBox.alignment = Pos.CENTER
-        vBox.children.addAll(filenameTextField, insideSaveButton)
-        vBox.prefHeight = 150.0
-        vBox.prefWidth = 150.0
-
         val createStage = Stage()
-        val scene = Scene(vBox)
-        createStage.title = "Create File"
-        createStage.scene = scene
-        createStage.show()
+        fun createExtraStage(){
+            filenameTextField.promptText = "Filename"
+            filenameTextField.maxWidth = 150.0
+            insideSaveButton.text = "Save"
+            val vBox = VBox()
+            vBox.spacing = 5.0
+            vBox.alignment = Pos.CENTER
+            vBox.children.addAll(filenameTextField, insideSaveButton)
+            vBox.prefHeight = 150.0
+            vBox.prefWidth = 200.0
+            val scene = Scene(vBox)
+            createStage.title = "Create File"
+            createStage.scene = scene
+            createStage.show()
+        }
+        createExtraStage()
 
         insideSaveButton.setOnAction {
             //TODO   correct filename check
             File("${filenameTextField.text ?: "null"}.json").writeText(factoryLayout.jsonString())
+            data.setFactoryLayout(factoryLayout)
+            data.setCreationFlag(false)
             createStage.close()
+
+            val stage = this.saveButton.scene.window as Stage
+            val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
+            val scene = Scene(loader.load() as Parent)
+            stage.scene = scene
+            stage.show()
         }
     }
 

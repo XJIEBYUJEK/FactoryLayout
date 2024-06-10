@@ -1,6 +1,5 @@
 package com.example.factorylayout.model
 
-import javafx.scene.paint.Color
 import kotlinx.serialization.Serializable
 
 @Serializable
