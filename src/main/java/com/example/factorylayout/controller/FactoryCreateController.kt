@@ -24,22 +24,22 @@ import java.io.File
 class FactoryCreateController {
 
     @FXML
-    lateinit var saveButton: Button
+    private lateinit var saveButton: Button
 
     @FXML
-    lateinit var undoCheckBox: CheckBox
+    private lateinit var undoCheckBox: CheckBox
 
     @FXML
-    lateinit var warningLabel: Label
+    private lateinit var warningLabel: Label
 
     @FXML
-    lateinit var lengthText: TextField
+    private lateinit var lengthText: TextField
 
     @FXML
-    lateinit var widthText: TextField
+    private lateinit var widthText: TextField
 
     @FXML
-    lateinit var canvas: Canvas
+    private lateinit var canvas: Canvas
 
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
 
