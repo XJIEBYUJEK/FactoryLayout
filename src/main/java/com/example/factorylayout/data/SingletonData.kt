@@ -1,6 +1,7 @@
-package com.example.factorylayout
+package com.example.factorylayout.data
 
 import com.example.factorylayout.model.Factory
+import com.example.factorylayout.model.FactoryObject
 
 class SingletonData private constructor(){
     companion object {
@@ -15,7 +16,8 @@ class SingletonData private constructor(){
     }
 
     private lateinit var factory: Factory
-    private var openedFromFile = true
+    private lateinit var factoryObject: FactoryObject
+    private var fileName = ""
 
     fun getFactoryLayout(): Factory {
         return factory
@@ -25,11 +27,22 @@ class SingletonData private constructor(){
         this.factory = f
     }
 
-    fun getCreationFlag(): Boolean{
-        return openedFromFile
+    fun getFactoryObject(): FactoryObject{
+        return factoryObject
     }
 
-    fun setCreationFlag(flag: Boolean){
-        this.openedFromFile = flag
+    fun setFactoryObject(fo: FactoryObject){
+        this.factoryObject = fo
     }
+
+    fun getFileName(): String {
+        return fileName
+    }
+
+    fun setFileName(name: String){
+        this.fileName = name
+    }
+
+
+
 }

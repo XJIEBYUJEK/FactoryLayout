@@ -33,8 +33,8 @@
    <top>
       <HBox prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="25.0" prefWidth="378.0" text="Add Object" />
-            <Button mnemonicParsing="false" prefHeight="25.0" prefWidth="421.0" text="Save Project" />
+            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="378.0" text="Add Object" />
+            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="421.0" text="Save Project" />
          </children>
       </HBox>
    </top>

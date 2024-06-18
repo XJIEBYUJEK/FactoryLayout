@@ -1,10 +1,9 @@
 package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
-import com.example.factorylayout.SingletonData
+import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
-import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
@@ -46,7 +45,7 @@ class FactoryCreateController {
     private val data = SingletonData.getInstance()
 
     @FXML
-    fun onCreateClick(event: ActionEvent) {
+    fun onCreateClick() {
         warningLabel.text = ""
         val width = widthText.text.toDoubleOrNull()?.times(10)
         val length = lengthText.text.toDoubleOrNull()?.times(10)
@@ -107,7 +106,7 @@ class FactoryCreateController {
         }
     }
 
-    fun saveFactoryLayout(actionEvent: ActionEvent) {
+    fun saveFactoryLayout() {
 
         val factoryLayout = Factory(widthText.text.toInt(), lengthText.text.toInt(), coordinateList)
         val filenameTextField = TextField()
@@ -132,9 +131,8 @@ class FactoryCreateController {
 
         insideSaveButton.setOnAction {
             //TODO   correct filename check
-            File("${filenameTextField.text ?: "null"}.json").writeText(factoryLayout.jsonString())
+            File("${filenameTextField.text ?: "null"}.json").writeText(factoryLayout.toJsonString())
             data.setFactoryLayout(factoryLayout)
-            data.setCreationFlag(false)
             createStage.close()
 
             val stage = this.saveButton.scene.window as Stage
@@ -145,7 +143,7 @@ class FactoryCreateController {
         }
     }
 
-    fun onBackPressed(actionEvent: ActionEvent) {
+    fun onBackPressed() {
         val stage = this.canvas.scene.window as Stage
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(loader.load(), 200.0, 180.0)

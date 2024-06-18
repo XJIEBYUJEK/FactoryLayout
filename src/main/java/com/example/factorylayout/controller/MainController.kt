@@ -1,7 +1,7 @@
 package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
-import com.example.factorylayout.SingletonData
+import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.model.Factory
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
@@ -65,7 +65,7 @@ class MainController {
             val textInFile = File("${filenameTextField.text ?: "null"}.json").readText()
             val factoryLayout = Json.decodeFromString<Factory>(textInFile)
             data.setFactoryLayout(factoryLayout)
-            data.setCreationFlag(true)
+            data.setFileName(filenameTextField.text)
             openStage.close()
 
             val stage = this.openButton.scene.window as Stage

@@ -7,8 +7,9 @@ import kotlinx.serialization.json.Json
 data class Factory(
     val width: Int,
     val length: Int,
-    val excludedCoordinates: List<Coordinate>
+    val excludedCoordinates: List<Coordinate>,
+    val objects: MutableList<Pair<FactoryObject, Coordinate>> = mutableListOf()
 ){
-    fun jsonString() = Json.encodeToString(serializer(), this)
+    fun toJsonString() = Json.encodeToString(serializer(), this)
 }
 
