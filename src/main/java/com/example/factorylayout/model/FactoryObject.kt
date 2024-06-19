@@ -13,10 +13,10 @@ import kotlinx.serialization.encoding.Encoder
 @Serializable
 data class FactoryObject(
     val id: Int,
-    val name: String?,
+    var name: String?,
     val coordinates: List<Coordinate>,
     @Serializable (with = ColorAsStringSerializer::class)
-    val color: Color,
+    var color: Color,
 //    @Contextual val dateStart: Date,
 //    @Contextual val dateEnd: Date
 )

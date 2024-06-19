@@ -101,7 +101,7 @@ class ObjectCreateController {
             it.y -= minY
         }
         val factoryObject = FactoryObject(
-            id = factory.objects.lastIndex + 1,
+            id = if(factory.objects.size > 0) factory.objects.last().first.id + 1 else 0,
             name = objectNameText.text,
             color = colorPicker.value,
             coordinates = coordinateList)

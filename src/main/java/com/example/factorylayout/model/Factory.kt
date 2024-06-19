@@ -11,5 +11,6 @@ data class Factory(
     val objects: MutableList<Pair<FactoryObject, Coordinate>> = mutableListOf()
 ){
     fun toJsonString() = Json.encodeToString(serializer(), this)
+    fun makeCopy() = Factory(this.width, this.length, this.excludedCoordinates, this.objects.toMutableList())
 }
 
