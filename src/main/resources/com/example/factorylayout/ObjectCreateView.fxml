@@ -4,10 +4,10 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
-
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.ObjectCreateController">
    <top>
@@ -22,8 +22,10 @@
    <bottom>
       <AnchorPane prefHeight="50.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
-            <Button layoutX="910.0" layoutY="13.0" mnemonicParsing="false" onAction="#onAddButtonClick" text="Add" />
+            <Button fx:id="addButton" disable="true" layoutX="910.0" layoutY="13.0" mnemonicParsing="false" onAction="#onAddButtonClick" text="Add" />
             <Button layoutX="14.0" layoutY="13.0" mnemonicParsing="false" onAction="#onCancelButtonClick" text="Cancel" />
+            <DatePicker fx:id="startDatePicker" layoutX="139.0" layoutY="13.0" onAction="#startDatePickerChanged" />
+            <DatePicker fx:id="endDatePicker" layoutX="413.0" layoutY="13.0" onAction="#endDatePickerChanged" />
          </children>
       </AnchorPane>
    </bottom>

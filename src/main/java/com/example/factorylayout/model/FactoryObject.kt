@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import java.time.LocalDate
 
 @Serializable
 data class FactoryObject(
@@ -17,8 +18,10 @@ data class FactoryObject(
     val coordinates: List<Coordinate>,
     @Serializable (with = ColorAsStringSerializer::class)
     var color: Color,
-//    @Contextual val dateStart: Date,
-//    @Contextual val dateEnd: Date
+    @Serializable (with = DateAsStringSerializer::class)
+    var dateStart: LocalDate,
+    @Serializable (with = DateAsStringSerializer::class)
+    var dateEnd: LocalDate
 )
 
 object ColorAsStringSerializer : KSerializer<Color> {
@@ -32,5 +35,19 @@ object ColorAsStringSerializer : KSerializer<Color> {
     override fun deserialize(decoder: Decoder): Color {
         val string = decoder.decodeString()
         return Color.web(string)
+    }
+}
+
+object DateAsStringSerializer : KSerializer<LocalDate> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Color", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDate) {
+        val string = value.toString()
+        encoder.encodeString(string)
+    }
+
+    override fun deserialize(decoder: Decoder): LocalDate {
+        val string = decoder.decodeString()
+        return LocalDate.parse(string)
     }
 }

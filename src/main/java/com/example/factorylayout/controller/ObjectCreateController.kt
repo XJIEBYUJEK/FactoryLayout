@@ -8,10 +8,7 @@ import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
-import javafx.scene.control.Button
-import javafx.scene.control.CheckBox
-import javafx.scene.control.ColorPicker
-import javafx.scene.control.TextField
+import javafx.scene.control.*
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
@@ -21,6 +18,15 @@ import javafx.scene.shape.StrokeType
 import javafx.stage.Stage
 
 class ObjectCreateController {
+
+    @FXML
+    lateinit var endDatePicker: DatePicker
+
+    @FXML
+    lateinit var startDatePicker: DatePicker
+
+    @FXML
+    lateinit var addButton: Button
 
     @FXML
     lateinit var colorPicker: ColorPicker
@@ -41,6 +47,7 @@ class ObjectCreateController {
 
     @FXML
     fun initialize() {
+        colorPicker.value = Color.BLACK
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
         val gc = canvas.getGraphicsContext2D()
@@ -104,7 +111,9 @@ class ObjectCreateController {
             id = if(factory.objects.size > 0) factory.objects.last().first.id + 1 else 0,
             name = objectNameText.text,
             color = colorPicker.value,
-            coordinates = coordinateList)
+            coordinates = coordinateList,
+            dateStart = startDatePicker.value,
+            dateEnd = endDatePicker.value)
         data.setFactoryObject(factoryObject)
 
         val insideAddButton = Button()
@@ -141,75 +150,13 @@ class ObjectCreateController {
         val gc = canvas.getGraphicsContext2D()
         var x = 0.5
         var y = 0.5
-        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-        factory.objects.forEach {
-            it.first.coordinates.forEach {coordinate ->
-                excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
-            }
-        }
-
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
                 val dataX = x.toUserCoordinate()
                 val dataY = y.toUserCoordinate()
-                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
+                if (!factory.excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
                     gc.fillRect(x, y, 9.5, 9.5)
-                    gc.fill = Color.BLACK
-                    gc.lineWidth = 1.0
-                    if (x == 0.5
-                        || excludedCoordinates.contains(Coordinate(dataX - 1, dataY))){
-                        gc.moveTo(x, y )
-                        gc.lineTo(x, y + 10)
-                        gc.stroke()
-                    }
-                    if (x == canvas.width - 10.5
-                        || excludedCoordinates.contains(Coordinate(dataX + 1, dataY))){
-                        gc.moveTo(x + 10, y )
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                    if (y == 0.5
-                        || excludedCoordinates.contains(Coordinate(dataX, dataY - 1))){
-                        gc.moveTo(x , y)
-                        gc.lineTo(x + 10, y)
-                        gc.stroke()
-                    }
-                    if (y == canvas.height - 10.5
-                        || excludedCoordinates.contains(Coordinate(dataX, dataY + 1))){
-                        gc.moveTo(x, y + 10)
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                }
-                else if(factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    gc.fill = Color.GRAY
-                    gc.fillRect(x, y, 10.0, 10.0)
-                } else{
-                    val colorInfo = factory.objects.first{ it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) }
-                    gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.fill = Color.BLACK
-                    if (x == 0.5){
-                        gc.moveTo(x, y )
-                        gc.lineTo(x, y + 10)
-                        gc.stroke()
-                    }
-                    if (x == canvas.width - 10.5){
-                        gc.moveTo(x + 10, y )
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                    if (y == 0.5){
-                        gc.moveTo(x , y)
-                        gc.lineTo(x + 10, y)
-                        gc.stroke()
-                    }
-                    if (y == canvas.height - 10.5){
-                        gc.moveTo(x, y + 10)
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
                 }
                 y += 10
             }
@@ -234,6 +181,24 @@ class ObjectCreateController {
     fun onCancelButtonClick() {
         val stage = this.canvas.scene.window as Stage
         stage.close()
+    }
+
+    fun startDatePickerChanged() {
+       if (startDatePicker.value != null && endDatePicker.value != null && startDatePicker.value < endDatePicker.value){
+           addButton.isDisable = false
+       }
+       else {
+           addButton.isDisable = true
+       }
+    }
+
+    fun endDatePickerChanged() {
+        if (startDatePicker.value != null && endDatePicker.value != null && startDatePicker.value < endDatePicker.value){
+            addButton.isDisable = false
+        }
+        else {
+            addButton.isDisable = true
+        }
     }
 
 }

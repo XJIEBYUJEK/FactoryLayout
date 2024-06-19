@@ -7,6 +7,7 @@ import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.factory.FactoryObjectCellFactory
 import com.example.factorylayout.model.Factory
 import javafx.collections.FXCollections
+import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
@@ -15,19 +16,20 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
-import javafx.scene.control.Button
-import javafx.scene.control.ColorPicker
-import javafx.scene.control.ListView
-import javafx.scene.control.TextField
+import javafx.scene.control.*
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
 import javafx.stage.Stage
 import java.io.File
+import java.time.LocalDate
 
 
 class FactoryController {
+
+    @FXML
+    lateinit var currentDatePicker: DatePicker
 
     @FXML
     lateinit var listView: ListView<Pair<FactoryObject, Coordinate>>
@@ -40,7 +42,7 @@ class FactoryController {
 
     @FXML
     fun initialize() {
-
+        if (currentDatePicker.value == null) currentDatePicker.value = LocalDate.now()
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
         listView.items = FXCollections.observableList(factory.objects)
@@ -176,9 +178,12 @@ class FactoryController {
         var y = 0.5
         val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
         factory.objects.forEach {
-            it.first.coordinates.forEach {coordinate ->
-                excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
+            if (it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value){
+                it.first.coordinates.forEach {coordinate ->
+                    excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
+                }
             }
+
         }
 
         while (x < canvas.width - 0.5){
@@ -190,7 +195,9 @@ class FactoryController {
                     gc.fillRect(x, y, 10.0, 10.0)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    val colorInfo = factory.objects.first{ it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) }
+                    val colorInfo = factory.objects.first{
+                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
+                    }
                     gc.fill = colorInfo.first.color
                     gc.fillRect(x, y, 10.0, 10.0)
                 }
@@ -256,5 +263,9 @@ class FactoryController {
             shape.layoutY= (e.sceneY.toInt() / 20) * 10.0
         }
         return shape
+    }
+
+    fun onCurrentDatePickerAction() {
+        initialize()
     }
 }
