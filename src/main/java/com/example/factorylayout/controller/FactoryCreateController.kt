@@ -133,6 +133,7 @@ class FactoryCreateController {
             //TODO   correct filename check
             File("${filenameTextField.text ?: "null"}.json").writeText(factoryLayout.toJsonString())
             data.setFactoryLayout(factoryLayout)
+            data.setFileName(filenameTextField.text)
             createStage.close()
 
             val stage = this.saveButton.scene.window as Stage
