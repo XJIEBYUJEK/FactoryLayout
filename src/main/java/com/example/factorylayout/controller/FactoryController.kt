@@ -15,6 +15,7 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
@@ -26,6 +27,15 @@ import java.time.LocalDate
 
 
 class FactoryController {
+
+    @FXML
+    lateinit var topHbox: HBox
+
+    @FXML
+    lateinit var leftVbox: VBox
+
+    @FXML
+    lateinit var infoTextField: TextArea
 
     @FXML
     lateinit var errorsLabel: Label
@@ -335,5 +345,42 @@ class FactoryController {
             }
         }
         if (textField.text != "") errorsLabel.isVisible = true
+    }
+
+    fun onMouseExitedCanvas() {
+        infoTextField.text = ""
+    }
+
+    fun onMouseMovedInsideCanvas(e: MouseEvent) {
+        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
+        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        infoTextField.text = "x = $x \ny = $y \n"
+        if (textField.text == ""){
+            try {
+                val pair = factory.objects.first{
+                    it.first.dateStart <= currentDatePicker.value
+                            && it.first.dateEnd >= currentDatePicker.value
+                            && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
+                }
+                infoTextField.text += "${listView.items.indexOf(pair)}. ${pair.first.name}\n" +
+                        "start date: ${pair.first.dateStart}\n" +
+                        "end date: ${pair.first.dateEnd}"
+            } catch (_: Exception){}
+        }
+    }
+
+    fun onMouseClickedInsideCanvas(e: MouseEvent) {
+        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
+        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        if (textField.text == ""){
+            try {
+                val pair = factory.objects.first{
+                    it.first.dateStart <= currentDatePicker.value
+                            && it.first.dateEnd >= currentDatePicker.value
+                            && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
+                }
+                listView.selectionModel.select(listView.items.indexOf(pair))
+            } catch (_: Exception){}
+        }
     }
 }

@@ -17,9 +17,9 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="1130.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryController">
    <left>
-      <VBox prefHeight="432.0" prefWidth="130.0" BorderPane.alignment="CENTER">
+      <VBox fx:id="leftVbox" prefHeight="432.0" prefWidth="130.0" BorderPane.alignment="CENTER">
          <children>
-            <ListView fx:id="listView" prefHeight="461.0" prefWidth="130.0" />
+            <ListView fx:id="listView" prefHeight="305.0" prefWidth="130.0" />
             <Button mnemonicParsing="false" onAction="#onEditButtonClick" prefHeight="25.0" prefWidth="403.0" text="Edit Selected Object">
                <VBox.margin>
                   <Insets bottom="1.0" left="2.0" right="1.0" top="2.0" />
@@ -30,11 +30,12 @@
                   <Insets bottom="2.0" left="1.0" right="1.0" />
                </VBox.margin>
             </Button>
+            <TextArea fx:id="infoTextField" prefHeight="150.0" prefWidth="130.0" />
          </children>
       </VBox>
    </left>
    <top>
-      <HBox prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
+      <HBox fx:id="topHbox" prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
             <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="378.0" text="Add Object" />
             <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="400.0" text="Save Project" />
@@ -62,7 +63,7 @@
       <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
             <TextArea fx:id="textField" prefHeight="500.0" prefWidth="200.0" />
-            <Canvas fx:id="canvas" height="500.0" width="1000.0" />
+            <Canvas fx:id="canvas" height="500.0" onMouseClicked="#onMouseClickedInsideCanvas" onMouseExited="#onMouseExitedCanvas" onMouseMoved="#onMouseMovedInsideCanvas" width="1000.0" />
          </children>
       </StackPane>
    </center>
