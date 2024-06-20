@@ -4,12 +4,16 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="1130.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryController">
    <left>
@@ -33,13 +37,11 @@
       <HBox prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
             <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="378.0" text="Add Object" />
-            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="421.0" text="Save Project" />
+            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="400.0" text="Save Project" />
+            <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="332.0" text="Show Errors" />
          </children>
       </HBox>
    </top>
-   <center>
-      <Canvas fx:id="canvas" height="500.0" width="1000.0" BorderPane.alignment="CENTER" />
-   </center>
    <bottom>
       <AnchorPane focusTraversable="true" prefHeight="30.0" prefWidth="1130.0" BorderPane.alignment="CENTER">
          <children>
@@ -48,7 +50,20 @@
             <DatePicker fx:id="startDatePicker" layoutX="118.0" layoutY="2.0" onAction="#onStartDatePickerAction" promptText="Start Date" />
             <DatePicker fx:id="endDatePicker" layoutX="313.0" layoutY="2.0" onAction="#onEndDatePickerAction" promptText="End Date" />
             <Slider fx:id="dateSlider" layoutX="556.0" layoutY="7.0" onMouseReleased="#onDragSlider" prefHeight="14.0" prefWidth="299.0" visible="false" />
+            <Label fx:id="errorsLabel" layoutX="530.0" layoutY="1.0" text="Project has errors!" textFill="#f50000" visible="false">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Label>
          </children>
       </AnchorPane>
    </bottom>
+   <center>
+      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <TextArea fx:id="textField" prefHeight="500.0" prefWidth="200.0" />
+            <Canvas fx:id="canvas" height="500.0" width="1000.0" />
+         </children>
+      </StackPane>
+   </center>
 </BorderPane>

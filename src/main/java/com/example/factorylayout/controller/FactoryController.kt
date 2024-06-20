@@ -28,6 +28,15 @@ import java.time.LocalDate
 class FactoryController {
 
     @FXML
+    lateinit var errorsLabel: Label
+
+    @FXML
+    lateinit var errorsButton: Button
+
+    @FXML
+    lateinit var textField: TextArea
+
+    @FXML
     lateinit var dateSlider: Slider
 
     @FXML
@@ -51,9 +60,11 @@ class FactoryController {
 
     @FXML
     fun initialize() {
+        textFieldSetup()
         datePickersSetup()
         listObjectsSetup()
         factoryMapSetup()
+        checkErrors()
     }
 
     fun onBackPressed() {
@@ -255,7 +266,16 @@ class FactoryController {
     private fun factoryMapSetup(){
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
+
         drawFactoryWithoutOutline(canvas, factory, currentDatePicker.value)
+    }
+
+    private fun textFieldSetup(){
+        textField.text = ""
+        textField.isVisible = false
+        errorsButton.text = "Show Errors"
+        canvas.isVisible = true
+        errorsLabel.isVisible = false
     }
 
     private fun updateSlider(isVisible: Boolean){
@@ -268,4 +288,52 @@ class FactoryController {
     }
 
     private fun Double.toUserCoordinate() = (this / 10).toInt()
+    fun onErrorsButtonClick() {
+        if (errorsButton.text == "Show Errors"){
+            errorsButton.text = "Hide Errors"
+            textField.isVisible = true
+            canvas.isVisible = false
+        }
+        else{
+            errorsButton.text = "Show Errors"
+            textField.isVisible = false
+            canvas.isVisible = true
+        }
+    }
+
+    private fun checkErrors(){
+        for (pair in factory.objects){
+            val collisionsId = mutableListOf<Int>()
+            for (coordinate in pair.first.coordinates){
+                val shiftedX = coordinate.x + pair.second.x
+                val shiftedY = coordinate.y + pair.second.y
+                if (factory.excludedCoordinates.contains(Coordinate(shiftedX, shiftedY))) {
+                    collisionsId.add(-1)
+                }
+                for (comparedPair in factory.objects){
+                    if (comparedPair != pair){
+                        if (comparedPair.first.dateStart >= pair.first.dateStart && comparedPair.first.dateStart <= pair.first.dateEnd
+                            || comparedPair.first.dateStart <= pair.first.dateStart && comparedPair.first.dateEnd >= pair.first.dateStart){
+                            comparedPair.first.coordinates.forEach {
+                                if (it.x + comparedPair.second.x == shiftedX && it.y + comparedPair.second.y == shiftedY){
+                                    collisionsId.add(comparedPair.first.id)
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+            collisionsId.distinct().forEach{
+                val objectNumber = listView.items.indexOf(pair)
+                if (it == -1) {
+                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with FactoryLayout.\n"
+                } else {
+                    val obj = listView.items.first{ obj -> obj.first.id == it}
+                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
+                }
+            }
+        }
+        if (textField.text != "") errorsLabel.isVisible = true
+    }
 }

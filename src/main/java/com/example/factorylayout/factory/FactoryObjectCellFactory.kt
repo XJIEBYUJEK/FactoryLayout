@@ -11,7 +11,7 @@ class FactoryObjectCellFactory: ListCell<Pair<FactoryObject, Coordinate>>() {
         text = if (empty || item == null) {
             ""
         } else {
-            "${item.first.id}. ${item.first.name}"
+            "${this.index}. ${item.first.name}"
         }
     }
 }
