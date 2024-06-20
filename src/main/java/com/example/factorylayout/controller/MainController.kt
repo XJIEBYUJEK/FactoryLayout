@@ -3,18 +3,17 @@ package com.example.factorylayout.controller
 import com.example.factorylayout.FactoryApplication
 import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.model.Factory
-import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.control.Button
-import javafx.scene.control.TextField
-import javafx.scene.layout.VBox
+import javafx.stage.FileChooser
 import javafx.stage.Stage
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.nio.file.Paths
+
 
 class MainController {
 
@@ -29,7 +28,7 @@ class MainController {
 
 
     @FXML
-    fun createNewProject(event: ActionEvent) {
+    fun createNewProject() {
         val stage = this.createButton.scene.window as Stage
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryCreateView.fxml"))
         val root = loader.load<Any>() as Parent
@@ -39,41 +38,21 @@ class MainController {
     }
 
     @FXML
-    fun openProject(event: ActionEvent) {  //TODO add explorer
-        val filenameTextField = TextField()
-        val insideOpenButton = Button()
-        val openStage = Stage()
-        fun createExtraStage(){
-            filenameTextField.promptText = "Filename"
-            filenameTextField.maxWidth = 150.0
-            insideOpenButton.text = "Open"
-            val vBox = VBox()
-            vBox.spacing = 5.0
-            vBox.alignment = Pos.CENTER
-            vBox.children.addAll(filenameTextField, insideOpenButton)
-            vBox.prefHeight = 150.0
-            vBox.prefWidth = 200.0
-            val scene = Scene(vBox)
-            openStage.title = "Open File"
-            openStage.scene = scene
-            openStage.show()
-        }
-        createExtraStage()
-
-        insideOpenButton.setOnAction {
-            //TODO   correct filename check
-            val textInFile = File("${filenameTextField.text ?: "null"}.json").readText()
-            val factoryLayout = Json.decodeFromString<Factory>(textInFile)
-            data.setFactoryLayout(factoryLayout)
-            data.setFileName(filenameTextField.text)
-            openStage.close()
-
-            val stage = this.openButton.scene.window as Stage
-            val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
-            val scene = Scene(loader.load() as Parent)
-            stage.scene = scene
-            stage.show()
-        }
+    fun openProject() {  //TODO add explorer
+        val stage = this.openButton.scene.window as Stage
+        val fileChooser = FileChooser()
+        fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("json Files", "*.json"))
+        val currentPath = Paths.get(".").toAbsolutePath().normalize().toString()
+        fileChooser.initialDirectory = File(currentPath)
+        val file = fileChooser.showOpenDialog(stage)
+        val textInFile = file.readText()
+        val factoryLayout = Json.decodeFromString<Factory>(textInFile)
+        data.setFactoryLayout(factoryLayout)
+        data.setFileName(file.path)
+        val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
+        val scene = Scene(loader.load() as Parent)
+        stage.scene = scene
+        stage.show()
     }
 
 }

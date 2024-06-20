@@ -37,9 +37,10 @@
    <top>
       <HBox fx:id="topHbox" prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="378.0" text="Add Object" />
-            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="400.0" text="Save Project" />
-            <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="332.0" text="Show Errors" />
+            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="262.0" text="Add Object" />
+            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="293.0" text="Save Project" />
+            <Button mnemonicParsing="false" onAction="#onSaveAsButtonClicked" prefHeight="25.0" prefWidth="285.0" text="Save as ..." />
+            <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="290.0" text="Show Errors" />
          </children>
       </HBox>
    </top>

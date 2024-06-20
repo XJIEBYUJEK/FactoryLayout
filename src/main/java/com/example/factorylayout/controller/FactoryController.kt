@@ -21,8 +21,10 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
+import javafx.stage.FileChooser
 import javafx.stage.Stage
 import java.io.File
+import java.nio.file.Paths
 import java.time.LocalDate
 
 
@@ -100,7 +102,8 @@ class FactoryController {
     }
 
     fun onSaveButtonClick() {
-        File("${data.getFileName()}.json").writeText(factory.toJsonString())
+        //File("${data.getFileName()}.json").writeText(factory.toJsonString())
+        File(data.getFileName()).writeText(factory.toJsonString())
     }
 
     fun onDeleteButtonClick() {
@@ -400,5 +403,15 @@ class FactoryController {
         if (this.dayOfMonth < 10) {"0${this.dayOfMonth}."} else {"${this.dayOfMonth}."} +
         if (this.monthValue < 10) {"0${this.monthValue}."} else {"${this.monthValue}."} +
                 "${this.year}"
+
+    fun onSaveAsButtonClicked() {
+        val stage = this.canvas.scene.window as Stage
+        val fileChooser = FileChooser()
+        fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("json Files", "*.json"))
+        val currentPath = Paths.get(".").toAbsolutePath().normalize().toString()
+        fileChooser.initialDirectory = File(currentPath)
+        val file = fileChooser.showSaveDialog(stage)
+        file.writeText(factory.toJsonString())
+    }
 
 }

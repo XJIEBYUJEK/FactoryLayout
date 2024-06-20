@@ -6,7 +6,6 @@ import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
@@ -15,10 +14,11 @@ import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
+import javafx.stage.FileChooser
 import javafx.stage.Stage
 import java.io.File
+import java.nio.file.Paths
 
 class FactoryCreateController {
 
@@ -113,41 +113,20 @@ class FactoryCreateController {
     }
 
     fun saveFactoryLayout() {
-
         val factoryLayout = Factory(widthText.text.toInt(), lengthText.text.toInt(), coordinateList)
-        val filenameTextField = TextField()
-        val insideSaveButton = Button()
-        val createStage = Stage()
-        fun createExtraStage(){
-            filenameTextField.promptText = "Filename"
-            filenameTextField.maxWidth = 150.0
-            insideSaveButton.text = "Save"
-            val vBox = VBox()
-            vBox.spacing = 5.0
-            vBox.alignment = Pos.CENTER
-            vBox.children.addAll(filenameTextField, insideSaveButton)
-            vBox.prefHeight = 150.0
-            vBox.prefWidth = 200.0
-            val scene = Scene(vBox)
-            createStage.title = "Create File"
-            createStage.scene = scene
-            createStage.show()
-        }
-        createExtraStage()
-
-        insideSaveButton.setOnAction {
-            //TODO   correct filename check
-            File("${filenameTextField.text ?: "null"}.json").writeText(factoryLayout.toJsonString())
-            data.setFactoryLayout(factoryLayout)
-            data.setFileName(filenameTextField.text)
-            createStage.close()
-
-            val stage = this.saveButton.scene.window as Stage
-            val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
-            val scene = Scene(loader.load() as Parent)
-            stage.scene = scene
-            stage.show()
-        }
+        val stage = this.saveButton.scene.window as Stage
+        val fileChooser = FileChooser()
+        fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("json Files", "*.json"))
+        val currentPath = Paths.get(".").toAbsolutePath().normalize().toString()
+        fileChooser.initialDirectory = File(currentPath)
+        val file = fileChooser.showSaveDialog(stage)
+        file.writeText(factoryLayout.toJsonString())
+        data.setFactoryLayout(factoryLayout)
+        data.setFileName(file.path)
+        val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
+        val scene = Scene(loader.load() as Parent)
+        stage.scene = scene
+        stage.show()
     }
 
     fun onBackPressed() {
