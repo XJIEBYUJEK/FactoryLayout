@@ -11,9 +11,9 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.Button
-import javafx.scene.control.CheckBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
@@ -24,9 +24,6 @@ class FactoryCreateController {
 
     @FXML
     private lateinit var saveButton: Button
-
-    @FXML
-    private lateinit var undoCheckBox: CheckBox
 
     @FXML
     private lateinit var warningLabel: Label
@@ -80,25 +77,34 @@ class FactoryCreateController {
     }
 
     fun onMouseDragged(mouseEvent: MouseEvent) {
-        colorPixels(mouseEvent)
+        when (mouseEvent.button){
+            MouseButton.PRIMARY -> colorPixels(mouseEvent, false)
+            MouseButton.SECONDARY -> colorPixels(mouseEvent, true)
+            else -> {}
+        }
+
     }
 
     fun onMouseClicked(mouseEvent: MouseEvent) {
-        colorPixels(mouseEvent)
+        when (mouseEvent.button){
+            MouseButton.PRIMARY -> colorPixels(mouseEvent, false)
+            MouseButton.SECONDARY -> colorPixels(mouseEvent, true)
+            else -> {}
+        }
     }
 
-    private fun colorPixels(e: MouseEvent){
+    private fun colorPixels(e: MouseEvent, eraser: Boolean){
         val gc = canvas.getGraphicsContext2D()
         val x = e.x - e.x % 10
         val y = e.y - e.y % 10
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
             val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
-            if (undoCheckBox.isSelected){
+            if (eraser){
                 gc.fill =  Color.WHITE
                 coordinateList.remove(coordinate)
             }
             else{
-                gc.fill = Color.BLACK
+                gc.fill = Color.RED
                 coordinateList.add(coordinate)
                 coordinateList = coordinateList.distinct().toMutableList()
             }

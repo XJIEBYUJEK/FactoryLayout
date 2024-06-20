@@ -15,6 +15,7 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
+import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
@@ -46,6 +47,7 @@ class FactoryController {
 
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
+    private var insideDateSlider = Slider()
 
     @FXML
     fun initialize() {
@@ -53,7 +55,6 @@ class FactoryController {
         listObjectsSetup()
         factoryMapSetup()
     }
-    private fun Double.toUserCoordinate() = (this / 10).toInt()
 
     fun onBackPressed() {
         val stage = this.canvas.scene.window as Stage
@@ -92,19 +93,121 @@ class FactoryController {
         }
     }
 
-    private fun drawFactoryWithoutOutline(canvas: Canvas , factory: Factory){
+    fun onEditButtonClick() {
+        val index = listView.selectionModel.selectedIndex
+        if(index > -1){
+            val selectedItem = listView.items[index]
+            val tempFactory = factory.makeCopy()
+            tempFactory.objects.remove(selectedItem)
+
+            val insideEditButton = Button()
+            insideEditButton.text = "Edit"
+            val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
+            val shape = createShape(selectedItem)
+            val stage = Stage()
+            val group = Group(factoryCanvas, shape)
+            stage.title = "Edit Object"
+            val textField = TextField()
+            textField.text = selectedItem.first.name
+            val colorPicker = ColorPicker()
+            colorPicker.value = selectedItem.first.color
+            val insideStartDatePicker = DatePicker(selectedItem.first.dateStart)
+            val insideEndDatePicker = DatePicker(selectedItem.first.dateEnd)
+            val hBox = HBox(insideStartDatePicker, insideEndDatePicker)
+            insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
+            insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
+            insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
+            insideDateSlider.setOnMouseReleased {
+                drawFactoryWithoutOutline(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+            }
+            val vBox = VBox()
+            vBox.spacing = 5.0
+            vBox.alignment = Pos.CENTER
+            vBox.children.addAll(textField, colorPicker, group, hBox, insideDateSlider, insideEditButton)
+            val scene = Scene(vBox)
+            stage.scene = scene
+            stage.show()
+            drawFactoryWithoutOutline(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+            shape.setOnMouseDragged { e ->
+                shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
+                shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+                val bounds = shape.boundsInParent
+                insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
+            }
+            insideEditButton.setOnAction {
+                val bounds = shape.boundsInParent
+                selectedItem.second.x = bounds.minX.toInt() / 10
+                selectedItem.second.y = bounds.minY.toInt() / 10
+                selectedItem.first.color = colorPicker.value
+                selectedItem.first.name = textField.text
+                selectedItem.first.dateStart = insideStartDatePicker.value
+                selectedItem.first.dateEnd = insideEndDatePicker.value
+                stage.close()
+                initialize()
+            }
+        }
+    }
+
+    fun onCurrentDatePickerAction() {
+        if(startDatePicker.value != null && startDatePicker.value > currentDatePicker.value)
+            startDatePicker.value = currentDatePicker.value
+        if(endDatePicker.value != null && endDatePicker.value < currentDatePicker.value)
+            endDatePicker.value = currentDatePicker.value
+        if (startDatePicker.value != null && endDatePicker.value != null) updateSlider(true)
+        initialize()
+    }
+
+    fun onStartDatePickerAction() {
+        val value = startDatePicker.value
+        if (value != null){
+            if (value > currentDatePicker.value){
+                currentDatePicker.value = value
+                initialize()
+            }
+            if (endDatePicker.value != null && value > endDatePicker.value) endDatePicker.value = null
+            if (endDatePicker.value != null){
+                updateSlider(true)
+            }
+        }
+        else{
+            updateSlider(false)
+        }
+    }
+
+    fun onEndDatePickerAction() {
+        val value = endDatePicker.value
+        if (value != null){
+            if (value < currentDatePicker.value) {
+                currentDatePicker.value = value
+                initialize()
+            }
+            if (startDatePicker.value != null && value < startDatePicker.value) startDatePicker.value = null
+            if (startDatePicker.value != null){
+                updateSlider(true)
+            }
+        }
+        else{
+            updateSlider(false)
+        }
+    }
+
+    fun onDragSlider() {
+        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
+        initialize()
+    }
+
+    private fun drawFactoryWithoutOutline(canvas: Canvas , factory: Factory, currentDate: LocalDate){
         val gc = canvas.getGraphicsContext2D()
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
         val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
         factory.objects.forEach {
-            if (it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value){
+            if (it.first.dateStart <= currentDate && it.first.dateEnd >= currentDate){
                 it.first.coordinates.forEach {coordinate ->
                     excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
                 }
             }
-
         }
 
         while (x < canvas.width - 0.5){
@@ -129,44 +232,6 @@ class FactoryController {
         }
     }
 
-    fun onEditButtonClick() {
-        val index = listView.selectionModel.selectedIndex
-        if(index > -1){
-            val selectedItem = listView.items[index]
-            val tempFactory = factory.makeCopy()
-            tempFactory.objects.remove(selectedItem)
-
-            val insideEditButton = Button()
-            insideEditButton.text = "Edit"
-            val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
-            val shape = createShape(selectedItem)
-            val stage = Stage()
-            val group = Group(factoryCanvas, shape)
-            stage.title = "Edit Object"
-            val textField = TextField()
-            textField.text = selectedItem.first.name
-            val colorPicker = ColorPicker()
-            colorPicker.value = selectedItem.first.color
-            val vBox = VBox()
-            vBox.spacing = 5.0
-            vBox.alignment = Pos.CENTER
-            vBox.children.addAll(textField, colorPicker, group, insideEditButton)
-            val scene = Scene(vBox)
-            stage.scene = scene
-            stage.show()
-            drawFactoryWithoutOutline(factoryCanvas, tempFactory)
-            insideEditButton.setOnAction {
-                val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / 10
-                selectedItem.second.y = bounds.minY.toInt() / 10
-                selectedItem.first.color = colorPicker.value
-                selectedItem.first.name = textField.text
-                stage.close()
-                initialize()
-            }
-        }
-    }
-
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.first.coordinates.forEach {
@@ -175,10 +240,6 @@ class FactoryController {
         shape.fill = fo.first.color
         shape.layoutX = fo.second.x * 10.0
         shape.layoutY = fo.second.y * 10.0
-        shape.setOnMouseDragged { e ->
-            shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-            shape.layoutY= (e.sceneY.toInt() / 20) * 10.0
-        }
         return shape
     }
 
@@ -194,7 +255,7 @@ class FactoryController {
     private fun factoryMapSetup(){
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
-        drawFactoryWithoutOutline(canvas, factory)
+        drawFactoryWithoutOutline(canvas, factory, currentDatePicker.value)
     }
 
     private fun updateSlider(isVisible: Boolean){
@@ -206,53 +267,5 @@ class FactoryController {
         dateSlider.isVisible = isVisible
     }
 
-    fun onCurrentDatePickerAction() {
-        if(startDatePicker.value != null && startDatePicker.value > currentDatePicker.value)
-            startDatePicker.value = currentDatePicker.value
-        if(endDatePicker.value != null && endDatePicker.value < currentDatePicker.value)
-            endDatePicker.value = currentDatePicker.value
-        if (startDatePicker.value != null && endDatePicker.value != null) updateSlider(true)
-        initialize()
-    }
-
-    fun onStartDatePickerAction() {
-        val value = startDatePicker.value
-        if (value != null){
-            val days = value.toEpochDay().toDouble()
-            if (value > currentDatePicker.value){
-                currentDatePicker.value = value
-                initialize()
-            }
-            if (endDatePicker.value != null && value > endDatePicker.value) endDatePicker.value = null
-            if (endDatePicker.value != null){
-                updateSlider(true)
-            }
-        }
-        else{
-            updateSlider(false)
-        }
-    }
-
-    fun onEndDatePickerAction() {
-        val value = endDatePicker.value
-        if (value != null){
-            val days = value.toEpochDay().toDouble()
-            if (value < currentDatePicker.value) {
-                currentDatePicker.value = value
-                initialize()
-            }
-            if (startDatePicker.value != null && value < startDatePicker.value) startDatePicker.value = null
-            if (startDatePicker.value != null){
-                updateSlider(true)
-            }
-        }
-        else{
-            updateSlider(false)
-        }
-    }
-
-    fun onDragSlider() {
-        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
-        initialize()
-    }
+    private fun Double.toUserCoordinate() = (this / 10).toInt()
 }

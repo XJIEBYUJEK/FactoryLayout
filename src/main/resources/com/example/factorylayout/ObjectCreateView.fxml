@@ -2,7 +2,6 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.TextField?>
@@ -15,7 +14,6 @@
          <children>
             <TextField fx:id="objectNameText" layoutX="31.0" layoutY="13.0" promptText="Object Name" />
             <ColorPicker fx:id="colorPicker" layoutX="790.0" layoutY="13.0" />
-            <CheckBox fx:id="undoCheckBox" layoutX="209.0" layoutY="17.0" mnemonicParsing="false" text="Undo" />
          </children>
       </AnchorPane>
    </top>

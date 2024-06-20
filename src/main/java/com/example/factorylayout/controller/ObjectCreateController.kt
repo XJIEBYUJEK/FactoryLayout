@@ -9,13 +9,14 @@ import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
-import javafx.scene.shape.StrokeType
 import javafx.stage.Stage
+import java.time.LocalDate
 
 class ObjectCreateController {
 
@@ -37,11 +38,10 @@ class ObjectCreateController {
     @FXML
     private lateinit var objectNameText: TextField
 
-    @FXML
-    private lateinit var undoCheckBox: CheckBox
-
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
+
+    private val dateSlider = Slider()
 
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
 
@@ -69,34 +69,42 @@ class ObjectCreateController {
             gc.stroke()
             y += 10.0
         }
-
     }
 
     fun onMouseDragged(mouseEvent: MouseEvent) {
-        colorPixels(mouseEvent)
+        when (mouseEvent.button){
+            MouseButton.PRIMARY -> colorPixels(mouseEvent, false)
+            MouseButton.SECONDARY -> colorPixels(mouseEvent, true)
+            else -> {}
+        }
     }
 
     fun onMouseClicked(mouseEvent: MouseEvent) {
-        colorPixels(mouseEvent)
+        when (mouseEvent.button){
+            MouseButton.PRIMARY -> colorPixels(mouseEvent, false)
+            MouseButton.SECONDARY -> colorPixels(mouseEvent, true)
+            else -> {}
+        }
     }
 
-    private fun colorPixels(e: MouseEvent){
+    private fun colorPixels(e: MouseEvent, eraser: Boolean){
         val gc = canvas.getGraphicsContext2D()
         val x = e.x - e.x % 10
         val y = e.y - e.y % 10
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
             val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
-            if (undoCheckBox.isSelected){
+            if (eraser){
                 gc.fill =  Color.WHITE
                 coordinateList.remove(coordinate)
             }
             else{
-                gc.fill = Color.BLACK
+                gc.fill = Color.GREEN
                 coordinateList.add(coordinate)
                 coordinateList = coordinateList.distinct().toMutableList()
             }
             gc.fillRect(x + 1,y + 1,9.0,9.0)
         }
+        canAddCheck()
     }
 
     @FXML
@@ -120,13 +128,19 @@ class ObjectCreateController {
         val factoryCanvas = Canvas(factory.length.toDouble() * 10 + 1, factory.width.toDouble() * 10 + 1)
         val shape = createShape(factoryObject)
         val group = Group(factoryCanvas, shape)
+        dateSlider.min = startDatePicker.value.toEpochDay().toDouble()
+        dateSlider.max = endDatePicker.value.toEpochDay().toDouble()
+        dateSlider.value = startDatePicker.value.toEpochDay().toDouble()
+        dateSlider.setOnMouseReleased {
+            drawFactory(factoryCanvas)
+        }
         val createStage = this.canvas.scene.window as Stage
         fun createExtraStage(){
             insideAddButton.text = "Add"
             val vBox = VBox()
             vBox.spacing = 5.0
             vBox.alignment = Pos.CENTER
-            vBox.children.addAll(group, insideAddButton, )
+            vBox.children.addAll(group, dateSlider, insideAddButton)
             vBox.prefHeight = 150.0
             vBox.prefWidth = 200.0
             val scene = Scene(vBox)
@@ -136,7 +150,12 @@ class ObjectCreateController {
         }
         createExtraStage()
         drawFactory(factoryCanvas)
-
+        shape.setOnMouseDragged { e ->
+            shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
+            shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+            val bounds = shape.boundsInParent
+            insideAddButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
+        }
         insideAddButton.setOnAction {
             val bounds = shape.boundsInParent
             val factoryPair = Pair(factoryObject, Coordinate(bounds.minX.toInt() / 10, bounds.minY.toInt() / 10))
@@ -148,15 +167,32 @@ class ObjectCreateController {
 
     private fun drawFactory(canvas: Canvas){
         val gc = canvas.getGraphicsContext2D()
+        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
+        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
+        factory.objects.forEach {
+            if (it.first.dateStart <= LocalDate.ofEpochDay(dateSlider.value.toLong()) && it.first.dateEnd >= LocalDate.ofEpochDay(dateSlider.value.toLong())){
+                it.first.coordinates.forEach {coordinate ->
+                    excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
+                }
+            }
+        }
+
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
                 val dataX = x.toUserCoordinate()
                 val dataY = y.toUserCoordinate()
-                if (!factory.excludedCoordinates.contains(Coordinate(dataX, dataY))){
+                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 9.5, 9.5)
+                    gc.fillRect(x, y, 10.0, 10.0)
+                }
+                else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
+                    val colorInfo = factory.objects.first{
+                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
+                    }
+                    gc.fill = colorInfo.first.color
+                    gc.fillRect(x, y, 10.0, 10.0)
                 }
                 y += 10
             }
@@ -170,10 +206,6 @@ class ObjectCreateController {
             shape = Shape.union(shape, Rectangle(it.x * 10.0 + 1,it.y * 10.0 + 1,9.0,9.0))
         }
         shape.fill = fo.color
-        shape.setOnMouseDragged { e ->
-            shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-            shape.layoutY= (e.sceneY.toInt() / 20) * 10.0
-        }
         return shape
     }
     private fun Double.toUserCoordinate() = (this / 10).toInt()
@@ -184,21 +216,18 @@ class ObjectCreateController {
     }
 
     fun startDatePickerChanged() {
-       if (startDatePicker.value != null && endDatePicker.value != null && startDatePicker.value < endDatePicker.value){
-           addButton.isDisable = false
-       }
-       else {
-           addButton.isDisable = true
-       }
+        canAddCheck()
     }
 
     fun endDatePickerChanged() {
-        if (startDatePicker.value != null && endDatePicker.value != null && startDatePicker.value < endDatePicker.value){
-            addButton.isDisable = false
-        }
-        else {
-            addButton.isDisable = true
-        }
+        canAddCheck()
+    }
+
+    private fun canAddCheck(){
+        addButton.isDisable = !(startDatePicker.value != null
+                && endDatePicker.value != null
+                && startDatePicker.value < endDatePicker.value
+                && coordinateList.isNotEmpty())
     }
 
 }
