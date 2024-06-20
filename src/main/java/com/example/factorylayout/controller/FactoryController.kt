@@ -271,6 +271,13 @@ class FactoryController {
     private fun listObjectsSetup(){
         listView.items = FXCollections.observableList(factory.objects)
         listView.setCellFactory { FactoryObjectCellFactory() }
+        listView.setOnMouseClicked {
+            val index = listView.selectionModel.selectedIndex
+            val pair = listView.items[index]
+            infoTextField.text = "name: ${pair.first.name}\n" +
+                    "start date: ${pair.first.dateStart.toCustomString()}\n" +
+                    "end date: ${pair.first.dateEnd.toCustomString()}"
+        }
     }
 
     private fun factoryMapSetup(){
@@ -354,19 +361,24 @@ class FactoryController {
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
         val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
         val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
-        infoTextField.text = "x = $x \ny = $y \n"
-        if (textField.text == ""){
-            try {
-                val pair = factory.objects.first{
-                    it.first.dateStart <= currentDatePicker.value
-                            && it.first.dateEnd >= currentDatePicker.value
-                            && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
-                }
-                infoTextField.text += "${listView.items.indexOf(pair)}. ${pair.first.name}\n" +
-                        "start date: ${pair.first.dateStart}\n" +
-                        "end date: ${pair.first.dateEnd}"
-            } catch (_: Exception){}
+        infoTextField.text = "x = $x \ny = $y\n"
+        if (factory.excludedCoordinates.contains(Coordinate(x, y))){
+            infoTextField.text += "Excluded coordinate\n"
+        }else{
+            if (textField.text == ""){
+                try {
+                    val pair = factory.objects.first{
+                        it.first.dateStart <= currentDatePicker.value
+                                && it.first.dateEnd >= currentDatePicker.value
+                                && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
+                    }
+                    infoTextField.text += "name: ${pair.first.name}\n" +
+                            "start date: ${pair.first.dateStart.toCustomString()}\n" +
+                            "end date: ${pair.first.dateEnd.toCustomString()}"
+                } catch (_: Exception){}
+            }
         }
+
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
@@ -383,4 +395,10 @@ class FactoryController {
             } catch (_: Exception){}
         }
     }
+
+    private fun LocalDate.toCustomString() =
+        if (this.dayOfMonth < 10) {"0${this.dayOfMonth}."} else {"${this.dayOfMonth}."} +
+        if (this.monthValue < 10) {"0${this.monthValue}."} else {"${this.monthValue}."} +
+                "${this.year}"
+
 }
