@@ -7,7 +7,6 @@ import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.factory.FactoryObjectCellFactory
 import com.example.factorylayout.model.Factory
 import javafx.collections.FXCollections
-import javafx.event.ActionEvent
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
@@ -15,7 +14,6 @@ import javafx.scene.Group
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
 import javafx.scene.control.*
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
@@ -27,6 +25,15 @@ import java.time.LocalDate
 
 
 class FactoryController {
+
+    @FXML
+    lateinit var dateSlider: Slider
+
+    @FXML
+    lateinit var endDatePicker: DatePicker
+
+    @FXML
+    lateinit var startDatePicker: DatePicker
 
     @FXML
     lateinit var currentDatePicker: DatePicker
@@ -42,96 +49,10 @@ class FactoryController {
 
     @FXML
     fun initialize() {
-        if (currentDatePicker.value == null) currentDatePicker.value = LocalDate.now()
-        canvas.width = factory.length.toDouble() * 10 + 1
-        canvas.height = factory.width.toDouble() * 10 + 1
-        listView.items = FXCollections.observableList(factory.objects)
-        listView.setCellFactory { FactoryObjectCellFactory() }
-        //drawFactory()
-        drawFactoryWithoutOutline(canvas, factory)
+        datePickersSetup()
+        listObjectsSetup()
+        factoryMapSetup()
     }
-
-   /* private fun drawFactory(){
-        val gc = canvas.getGraphicsContext2D()
-        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
-        var x = 0.5
-        var y = 0.5
-        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-        factory.objects.forEach {
-            it.first.coordinates.forEach {coordinate ->
-                excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
-            }
-        }
-
-        while (x < canvas.width - 0.5){
-            while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate()
-                val dataY = y.toUserCoordinate()
-                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
-                    gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.fill = Color.BLACK
-                    gc.lineWidth = 1.0
-                    if (x == 0.5
-                        || excludedCoordinates.contains(Coordinate(dataX - 1, dataY))){
-                        gc.moveTo(x, y )
-                        gc.lineTo(x, y + 10)
-                        gc.stroke()
-                    }
-                    if (x == canvas.width - 10.5
-                        || excludedCoordinates.contains(Coordinate(dataX + 1, dataY))){
-                        gc.moveTo(x + 10, y )
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                    if (y == 0.5
-                        || excludedCoordinates.contains(Coordinate(dataX, dataY - 1))){
-                        gc.moveTo(x , y)
-                        gc.lineTo(x + 10, y)
-                        gc.stroke()
-                    }
-                    if (y == canvas.height - 10.5
-                        || excludedCoordinates.contains(Coordinate(dataX, dataY + 1))){
-                        gc.moveTo(x, y + 10)
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                }
-                else if(factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    gc.fill = Color.GRAY
-                    gc.fillRect(x, y, 10.0, 10.0)
-                } else{
-                    val colorInfo = factory.objects.first{ it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) }
-                    gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.fill = Color.BLACK
-                    if (x == 0.5){
-                        gc.moveTo(x, y )
-                        gc.lineTo(x, y + 10)
-                        gc.stroke()
-                    }
-                    if (x == canvas.width - 10.5){
-                        gc.moveTo(x + 10, y )
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                    if (y == 0.5){
-                        gc.moveTo(x , y)
-                        gc.lineTo(x + 10, y)
-                        gc.stroke()
-                    }
-                    if (y == canvas.height - 10.5){
-                        gc.moveTo(x, y + 10)
-                        gc.lineTo(x + 10, y + 10)
-                        gc.stroke()
-                    }
-                }
-                y += 10
-            }
-            y = 0.5
-            x += 10
-        }
-    }*/
     private fun Double.toUserCoordinate() = (this / 10).toInt()
 
     fun onBackPressed() {
@@ -243,10 +164,6 @@ class FactoryController {
                 stage.close()
                 initialize()
             }
-
-
-           // data.setFactoryLayout(factory)
-            //initialize()
         }
     }
 
@@ -265,7 +182,77 @@ class FactoryController {
         return shape
     }
 
+    private fun datePickersSetup(){
+        if (currentDatePicker.value == null) currentDatePicker.value = LocalDate.now()
+    }
+
+    private fun listObjectsSetup(){
+        listView.items = FXCollections.observableList(factory.objects)
+        listView.setCellFactory { FactoryObjectCellFactory() }
+    }
+
+    private fun factoryMapSetup(){
+        canvas.width = factory.length.toDouble() * 10 + 1
+        canvas.height = factory.width.toDouble() * 10 + 1
+        drawFactoryWithoutOutline(canvas, factory)
+    }
+
+    private fun updateSlider(isVisible: Boolean){
+        if (isVisible){
+            dateSlider.min = startDatePicker.value.toEpochDay().toDouble()
+            dateSlider.max = endDatePicker.value.toEpochDay().toDouble()
+            dateSlider.value = currentDatePicker.value.toEpochDay().toDouble()
+        }
+        dateSlider.isVisible = isVisible
+    }
+
     fun onCurrentDatePickerAction() {
+        if(startDatePicker.value != null && startDatePicker.value > currentDatePicker.value)
+            startDatePicker.value = currentDatePicker.value
+        if(endDatePicker.value != null && endDatePicker.value < currentDatePicker.value)
+            endDatePicker.value = currentDatePicker.value
+        if (startDatePicker.value != null && endDatePicker.value != null) updateSlider(true)
+        initialize()
+    }
+
+    fun onStartDatePickerAction() {
+        val value = startDatePicker.value
+        if (value != null){
+            val days = value.toEpochDay().toDouble()
+            if (value > currentDatePicker.value){
+                currentDatePicker.value = value
+                initialize()
+            }
+            if (endDatePicker.value != null && value > endDatePicker.value) endDatePicker.value = null
+            if (endDatePicker.value != null){
+                updateSlider(true)
+            }
+        }
+        else{
+            updateSlider(false)
+        }
+    }
+
+    fun onEndDatePickerAction() {
+        val value = endDatePicker.value
+        if (value != null){
+            val days = value.toEpochDay().toDouble()
+            if (value < currentDatePicker.value) {
+                currentDatePicker.value = value
+                initialize()
+            }
+            if (startDatePicker.value != null && value < startDatePicker.value) startDatePicker.value = null
+            if (startDatePicker.value != null){
+                updateSlider(true)
+            }
+        }
+        else{
+            updateSlider(false)
+        }
+    }
+
+    fun onDragSlider() {
+        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
         initialize()
     }
 }

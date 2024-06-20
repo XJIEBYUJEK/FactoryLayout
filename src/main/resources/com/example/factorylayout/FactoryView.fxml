@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -40,10 +41,13 @@
       <Canvas fx:id="canvas" height="500.0" width="1000.0" BorderPane.alignment="CENTER" />
    </center>
    <bottom>
-      <AnchorPane prefHeight="30.0" prefWidth="1130.0" BorderPane.alignment="CENTER">
+      <AnchorPane focusTraversable="true" prefHeight="30.0" prefWidth="1130.0" BorderPane.alignment="CENTER">
          <children>
             <Button layoutX="20.0" layoutY="2.0" mnemonicParsing="false" onAction="#onBackPressed" text="Back" />
-            <DatePicker fx:id="currentDatePicker" layoutX="96.0" layoutY="2.0" onAction="#onCurrentDatePickerAction" />
+            <DatePicker fx:id="currentDatePicker" layoutX="942.0" layoutY="2.0" onAction="#onCurrentDatePickerAction" promptText="Current Date" />
+            <DatePicker fx:id="startDatePicker" layoutX="118.0" layoutY="2.0" onAction="#onStartDatePickerAction" promptText="Start Date" />
+            <DatePicker fx:id="endDatePicker" layoutX="313.0" layoutY="2.0" onAction="#onEndDatePickerAction" promptText="End Date" />
+            <Slider fx:id="dateSlider" layoutX="556.0" layoutY="7.0" onMouseReleased="#onDragSlider" prefHeight="14.0" prefWidth="299.0" visible="false" />
          </children>
       </AnchorPane>
    </bottom>
