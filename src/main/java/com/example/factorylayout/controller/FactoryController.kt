@@ -142,7 +142,7 @@ class FactoryController {
             insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
             insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
             insideDateSlider.setOnMouseReleased {
-                drawFactoryWithoutOutline(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             }
             val vBox = VBox()
             vBox.spacing = 5.0
@@ -151,7 +151,7 @@ class FactoryController {
             val scene = Scene(vBox)
             stage.scene = scene
             stage.show()
-            drawFactoryWithoutOutline(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+            drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             shape.setOnMouseDragged { e ->
                 shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
                 shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
@@ -220,7 +220,7 @@ class FactoryController {
         initialize()
     }
 
-    private fun drawFactoryWithoutOutline(canvas: Canvas , factory: Factory, currentDate: LocalDate){
+    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate){
         val gc = canvas.getGraphicsContext2D()
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
@@ -238,9 +238,12 @@ class FactoryController {
             while (y < canvas.height - 0.5){
                 val dataX = x.toUserCoordinate()
                 val dataY = y.toUserCoordinate()
+                gc.stroke = Color.web("#DDDDDD")
+                gc.lineWidth = 1.0
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
                     gc.fillRect(x, y, 10.0, 10.0)
+                    gc.strokeRect(x, y, 10.0, 10.0)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
@@ -248,6 +251,7 @@ class FactoryController {
                     }
                     gc.fill = colorInfo.first.color
                     gc.fillRect(x, y, 10.0, 10.0)
+                    gc.strokeRect(x, y, 10.0, 10.0)
                 }
                 y += 10
             }
@@ -287,7 +291,7 @@ class FactoryController {
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
 
-        drawFactoryWithoutOutline(canvas, factory, currentDatePicker.value)
+        drawFactory(canvas, factory, currentDatePicker.value)
     }
 
     private fun textFieldSetup(){

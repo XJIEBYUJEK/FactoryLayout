@@ -48,26 +48,32 @@ class ObjectCreateController {
     @FXML
     fun initialize() {
         colorPicker.value = Color.BLACK
+        canvasSetup()
+    }
+
+    private fun canvasSetup(){
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
         val gc = canvas.getGraphicsContext2D()
-        gc.fill = Color.WHITE
-        gc.fillRect(0.0, 0.0, canvas.width, canvas.height )
-        gc.fill = Color.BLACK
-        gc.lineWidth = 1.0
+        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
-        while (x <= canvas.width) {
-            gc.moveTo(x, 0.0)
-            gc.lineTo(x, canvas.height - 1)
-            gc.stroke()
-            x += 10.0
-        }
-        while (y <= canvas.height) {
-            gc.moveTo(0.0, y)
-            gc.lineTo(canvas.width - 1, y)
-            gc.stroke()
-            y += 10.0
+        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
+        while (x < canvas.width - 0.5){
+            while (y < canvas.height - 0.5){
+                val dataX = x.toUserCoordinate()
+                val dataY = y.toUserCoordinate()
+                gc.stroke = Color.web("#DDDDDD")
+                gc.lineWidth = 1.0
+                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
+                    gc.fill = Color.WHITE
+                    gc.fillRect(x, y, 10.0, 10.0)
+                    gc.strokeRect(x, y, 10.0, 10.0)
+                }
+                y += 10
+            }
+            y = 0.5
+            x += 10
         }
     }
 
@@ -93,16 +99,18 @@ class ObjectCreateController {
         val y = e.y - e.y % 10
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
             val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
-            if (eraser){
-                gc.fill =  Color.WHITE
-                coordinateList.remove(coordinate)
+            if (!factory.excludedCoordinates.contains(coordinate)){
+                if (eraser){
+                    gc.fill =  Color.WHITE
+                    coordinateList.remove(coordinate)
+                }
+                else{
+                    gc.fill = Color.GREEN
+                    coordinateList.add(coordinate)
+                    coordinateList = coordinateList.distinct().toMutableList()
+                }
+                gc.fillRect(x + 1,y + 1,9.0,9.0)
             }
-            else{
-                gc.fill = Color.GREEN
-                coordinateList.add(coordinate)
-                coordinateList = coordinateList.distinct().toMutableList()
-            }
-            gc.fillRect(x + 1,y + 1,9.0,9.0)
         }
         canAddCheck()
     }
