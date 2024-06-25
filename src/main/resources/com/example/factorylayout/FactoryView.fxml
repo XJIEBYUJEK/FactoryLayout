@@ -51,7 +51,7 @@
             <DatePicker fx:id="currentDatePicker" layoutX="942.0" layoutY="2.0" onAction="#onCurrentDatePickerAction" promptText="Current Date" />
             <DatePicker fx:id="startDatePicker" layoutX="118.0" layoutY="2.0" onAction="#onStartDatePickerAction" promptText="Start Date" />
             <DatePicker fx:id="endDatePicker" layoutX="313.0" layoutY="2.0" onAction="#onEndDatePickerAction" promptText="End Date" />
-            <Slider fx:id="dateSlider" layoutX="556.0" layoutY="7.0" onMouseReleased="#onDragSlider" prefHeight="14.0" prefWidth="299.0" visible="false" />
+            <Slider fx:id="dateSlider" layoutX="556.0" layoutY="7.0" onMouseDragged="#onDragSlider" onMouseReleased="#onReleasedSlider" prefHeight="14.0" prefWidth="299.0" visible="false" />
             <Label fx:id="errorsLabel" layoutX="530.0" layoutY="1.0" text="Project has errors!" textFill="#f50000" visible="false">
                <font>
                   <Font size="18.0" />

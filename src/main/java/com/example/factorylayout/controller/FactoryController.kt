@@ -414,4 +414,9 @@ class FactoryController {
         file.writeText(factory.toJsonString())
     }
 
+    fun onReleasedSlider() {
+        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
+        initialize()
+    }
+
 }
