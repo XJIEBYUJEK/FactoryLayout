@@ -125,6 +125,7 @@ class FactoryCreateController {
         data.setFileName(file.path)
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
         val scene = Scene(loader.load() as Parent)
+        stage.title += " ${file.name}"
         stage.scene = scene
         stage.show()
     }

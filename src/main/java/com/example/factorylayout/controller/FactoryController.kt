@@ -84,6 +84,7 @@ class FactoryController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(loader.load(), 200.0, 180.0)
         stage.scene = scene
+        stage.title = "Factory Layout Manager"
         stage.show()
     }
 

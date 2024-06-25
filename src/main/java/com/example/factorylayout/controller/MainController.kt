@@ -7,6 +7,7 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
+import javafx.scene.control.Alert
 import javafx.scene.control.Button
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -24,8 +25,6 @@ class MainController {
     private lateinit var openButton: Button
 
     private val data = SingletonData.getInstance()
-
-
 
     @FXML
     fun createNewProject() {
@@ -46,13 +45,18 @@ class MainController {
         fileChooser.initialDirectory = File(currentPath)
         val file = fileChooser.showOpenDialog(stage)
         val textInFile = file.readText()
-        val factoryLayout = Json.decodeFromString<Factory>(textInFile)
-        data.setFactoryLayout(factoryLayout)
-        data.setFileName(file.path)
-        val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
-        val scene = Scene(loader.load() as Parent)
-        stage.scene = scene
-        stage.show()
+        try{
+            val factoryLayout = Json.decodeFromString<Factory>(textInFile)
+            data.setFactoryLayout(factoryLayout)
+            data.setFileName(file.path)
+            val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
+            val scene = Scene(loader.load() as Parent)
+            stage.scene = scene
+            stage.title += " ${file.name}"
+            stage.show()
+        } catch (e: Exception){
+            val alert = Alert(Alert.AlertType.ERROR, "Incorrect file content\n$e")
+            alert.show()
+        }
     }
-
 }
