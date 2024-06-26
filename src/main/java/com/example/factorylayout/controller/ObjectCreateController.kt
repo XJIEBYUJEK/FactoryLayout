@@ -11,6 +11,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
+import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
@@ -44,6 +45,7 @@ class ObjectCreateController {
     private val dateSlider = Slider()
 
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
+    private var scale= 10.0
 
     @FXML
     fun initialize() {
@@ -52,8 +54,9 @@ class ObjectCreateController {
     }
 
     private fun canvasSetup(){
-        canvas.width = factory.length.toDouble() * 10 + 1
-        canvas.height = factory.width.toDouble() * 10 + 1
+        canvas.width = factory.length * scale + 1
+        canvas.height = factory.width * scale + 1
+        onScrollCanvas(canvas)
         val gc = canvas.getGraphicsContext2D()
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
@@ -66,14 +69,14 @@ class ObjectCreateController {
                 gc.stroke = Color.web("#DDDDDD")
                 gc.lineWidth = 1.0
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
-                    gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fill = if (coordinateList.contains(Coordinate(dataX,dataY))) Color.GREEN else Color.WHITE
+                    gc.fillRect(x, y, scale, scale)
+                    gc.strokeRect(x, y, scale, scale)
                 }
-                y += 10
+                y += scale
             }
             y = 0.5
-            x += 10
+            x += scale
         }
     }
 
@@ -95,10 +98,10 @@ class ObjectCreateController {
 
     private fun colorPixels(e: MouseEvent, eraser: Boolean){
         val gc = canvas.getGraphicsContext2D()
-        val x = e.x - e.x % 10
-        val y = e.y - e.y % 10
+        val x = e.x - e.x % scale
+        val y = e.y - e.y % scale
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
-            val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
+            val coordinate = Coordinate((x / scale).toInt(), (y / scale).toInt() )
             if (!factory.excludedCoordinates.contains(coordinate)){
                 if (eraser){
                     gc.fill =  Color.WHITE
@@ -109,7 +112,7 @@ class ObjectCreateController {
                     coordinateList.add(coordinate)
                     coordinateList = coordinateList.distinct().toMutableList()
                 }
-                gc.fillRect(x + 1,y + 1,9.0,9.0)
+                gc.fillRect(x + 1,y + 1,scale - 1,scale - 1)
             }
         }
         canAddCheck()
@@ -133,7 +136,7 @@ class ObjectCreateController {
         data.setFactoryObject(factoryObject)
 
         val insideAddButton = Button()
-        val factoryCanvas = Canvas(factory.length.toDouble() * 10 + 1, factory.width.toDouble() * 10 + 1)
+        val factoryCanvas = Canvas(factory.length * scale + 1, factory.width * scale + 1)
         val shape = createShape(factoryObject)
         val group = Group(factoryCanvas, shape)
         dateSlider.min = startDatePicker.value.toEpochDay().toDouble()
@@ -159,14 +162,14 @@ class ObjectCreateController {
         createExtraStage()
         drawFactory(factoryCanvas)
         shape.setOnMouseDragged { e ->
-            shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-            shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+            shape.layoutX = (e.sceneX.toInt() / (scale.toInt()*2)) * scale
+            shape.layoutY = (e.sceneY.toInt() / (scale.toInt()*2) )* scale
             val bounds = shape.boundsInParent
             insideAddButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
         }
         insideAddButton.setOnAction {
             val bounds = shape.boundsInParent
-            val factoryPair = Pair(factoryObject, Coordinate(bounds.minX.toInt() / 10, bounds.minY.toInt() / 10))
+            val factoryPair = Pair(factoryObject, Coordinate(bounds.minX.toInt() / scale.toInt(), bounds.minY.toInt() / scale.toInt()))
             factory.objects.add(factoryPair)
             data.setFactoryLayout(factory)
             createStage.close()
@@ -193,30 +196,30 @@ class ObjectCreateController {
                 val dataY = y.toUserCoordinate()
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, scale, scale)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
                         it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
                     }
                     gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, scale, scale)
                 }
-                y += 10
+                y += scale
             }
             y = 0.5
-            x += 10
+            x += scale
         }
     }
     private fun createShape(fo: FactoryObject): Shape{
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * 10.0 + 1,it.y * 10.0 + 1,9.0,9.0))
+            shape = Shape.union(shape, Rectangle(it.x * scale + 1,it.y * scale + 1,scale - 1,scale - 1))
         }
         shape.fill = fo.color
         return shape
     }
-    private fun Double.toUserCoordinate() = (this / 10).toInt()
+    private fun Double.toUserCoordinate() = (this / scale).toInt()
     @FXML
     fun onCancelButtonClick() {
         val stage = this.canvas.scene.window as Stage
@@ -236,6 +239,18 @@ class ObjectCreateController {
                 && endDatePicker.value != null
                 && startDatePicker.value < endDatePicker.value
                 && coordinateList.isNotEmpty())
+    }
+
+    private fun onScrollCanvas(canvas: Canvas) {
+        canvas.setOnScroll {
+            if(it.deltaY < 0){
+                if (scale != 150.0) scale++
+            }
+            else {
+                if(scale != 5.0) scale --
+            }
+            initialize()
+        }
     }
 
 }

@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryCreateController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1000.0" prefWidth="1700.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryCreateController">
    <center>
       <Canvas fx:id="canvas" onMouseClicked="#onMouseClicked" onMouseDragged="#onMouseDragged" BorderPane.alignment="CENTER" />
    </center>
@@ -24,7 +24,7 @@
    <bottom>
       <AnchorPane prefHeight="34.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="saveButton" disable="true" layoutX="925.0" layoutY="5.0" mnemonicParsing="false" onAction="#saveFactoryLayout" prefHeight="25.0" prefWidth="61.0" text="Create" />
+            <Button fx:id="saveButton" disable="true" layoutX="1610.0" layoutY="2.0" mnemonicParsing="false" onAction="#saveFactoryLayout" prefHeight="25.0" prefWidth="61.0" text="Create" />
             <Button layoutX="14.0" layoutY="5.0" mnemonicParsing="false" onAction="#onBackPressed" text="Back" />
          </children>
       </AnchorPane>

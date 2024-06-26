@@ -40,34 +40,35 @@ class FactoryCreateController {
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
 
     private val data = SingletonData.getInstance()
+    private var scale = 15.0
 
     @FXML
     fun onCreateClick() {
         warningLabel.text = ""
-        val width = widthText.text.toDoubleOrNull()?.times(10)
-        val length = lengthText.text.toDoubleOrNull()?.times(10)
-        if (width != null && length != null && width > 0 && width <= 500 && length > 0 && length <= 1000){
+        val width = widthText.text.toDoubleOrNull()?.times(scale)
+        val length = lengthText.text.toDoubleOrNull()?.times(scale)
+        if (width != null && length != null && width > 0 && length > 0){
             saveButton.isDisable = false
             canvas.width = length + 1
             canvas.height = width + 1
+            onScrollCanvas(canvas)
             val gc = canvas.getGraphicsContext2D()
-            gc.fill = Color.WHITE
-            gc.fillRect(0.0, 0.0, canvas.width, canvas.height )
-            gc.fill = Color.BLACK
-            gc.lineWidth = 1.0
+            gc.clearRect(0.0,0.0, canvas.width, canvas.height)
             var x = 0.5
             var y = 0.5
-            while (x <= length + 0.5) {
-                gc.moveTo(x, 0.0)
-                gc.lineTo(x, width)
-                gc.stroke()
-                x += 10.0
-            }
-            while (y <= width + 0.5) {
-                gc.moveTo(0.0, y)
-                gc.lineTo(length, y)
-                gc.stroke()
-                y += 10.0
+            while (x < canvas.width - 0.5){
+                while (y < canvas.height - 0.5){
+                    val dataX = x.toUserCoordinate()
+                    val dataY = y.toUserCoordinate()
+                    gc.stroke = Color.web("#DDDDDD")
+                    gc.lineWidth = 1.0
+                    gc.fill = if (coordinateList.contains(Coordinate(dataX,dataY))) Color.RED else Color.WHITE
+                    gc.fillRect(x, y, scale, scale)
+                    gc.strokeRect(x, y, scale, scale)
+                    y += scale
+                }
+                y = 0.5
+                x += scale
             }
         }
         else {
@@ -75,7 +76,7 @@ class FactoryCreateController {
             warningLabel.text = "error"
         }
     }
-
+    private fun Double.toUserCoordinate() = (this / scale).toInt()
     fun onMouseDragged(mouseEvent: MouseEvent) {
         when (mouseEvent.button){
             MouseButton.PRIMARY -> colorPixels(mouseEvent, false)
@@ -95,10 +96,10 @@ class FactoryCreateController {
 
     private fun colorPixels(e: MouseEvent, eraser: Boolean){
         val gc = canvas.getGraphicsContext2D()
-        val x = e.x - e.x % 10
-        val y = e.y - e.y % 10
+        val x = e.x - e.x % scale
+        val y = e.y - e.y % scale
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
-            val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
+            val coordinate = Coordinate((x / scale).toInt(), (y / scale).toInt() )
             if (eraser){
                 gc.fill =  Color.WHITE
                 coordinateList.remove(coordinate)
@@ -108,7 +109,7 @@ class FactoryCreateController {
                 coordinateList.add(coordinate)
                 coordinateList = coordinateList.distinct().toMutableList()
             }
-            gc.fillRect(x + 1,y + 1,9.0,9.0)
+            gc.fillRect(x + 1,y + 1,scale - 1,scale - 1)
         }
     }
 
@@ -135,7 +136,20 @@ class FactoryCreateController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(loader.load(), 200.0, 180.0)
         stage.scene = scene
+        stage.isResizable = false
         stage.show()
+    }
+
+    private fun onScrollCanvas(canvas: Canvas) {
+        canvas.setOnScroll {
+            if(it.deltaY < 0){
+                if (scale != 150.0) scale++
+            }
+            else {
+                if(scale != 5.0) scale --
+            }
+            onCreateClick()
+        }
     }
 
 

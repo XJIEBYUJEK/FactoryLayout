@@ -16,6 +16,8 @@ import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
 import javafx.scene.input.MouseEvent
+import javafx.scene.input.ScrollEvent
+import javafx.scene.layout.AnchorPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
@@ -34,7 +36,7 @@ class FactoryController {
     lateinit var topHbox: HBox
 
     @FXML
-    lateinit var leftVbox: VBox
+    lateinit var leftAnchorPane: AnchorPane
 
     @FXML
     lateinit var infoTextField: TextArea
@@ -69,6 +71,7 @@ class FactoryController {
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
     private var insideDateSlider = Slider()
+    private var scale = 15.0
 
     @FXML
     fun initialize() {
@@ -85,6 +88,7 @@ class FactoryController {
         val scene = Scene(loader.load(), 200.0, 180.0)
         stage.scene = scene
         stage.title = "Factory Layout Manager"
+        stage.isResizable = false
         stage.show()
     }
 
@@ -103,7 +107,6 @@ class FactoryController {
     }
 
     fun onSaveButtonClick() {
-        //File("${data.getFileName()}.json").writeText(factory.toJsonString())
         File(data.getFileName()).writeText(factory.toJsonString())
     }
 
@@ -127,7 +130,7 @@ class FactoryController {
 
             val insideEditButton = Button()
             insideEditButton.text = "Edit"
-            val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
+            val factoryCanvas = Canvas(factory.length * scale + 1, factory.width * scale + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
@@ -154,15 +157,15 @@ class FactoryController {
             stage.show()
             drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             shape.setOnMouseDragged { e ->
-                shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-                shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+                shape.layoutX = (e.sceneX.toInt() / (scale.toInt()*2)) * scale
+                shape.layoutY = (e.sceneY.toInt() / (scale.toInt()*2) )* scale
                 val bounds = shape.boundsInParent
                 insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
             }
             insideEditButton.setOnAction {
                 val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / 10
-                selectedItem.second.y = bounds.minY.toInt() / 10
+                selectedItem.second.x = bounds.minX.toInt() / scale.toInt()
+                selectedItem.second.y = bounds.minY.toInt() / scale.toInt()
                 selectedItem.first.color = colorPicker.value
                 selectedItem.first.name = textField.text
                 selectedItem.first.dateStart = insideStartDatePicker.value
@@ -243,32 +246,32 @@ class FactoryController {
                 gc.lineWidth = 1.0
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, scale, scale)
+                    gc.strokeRect(x, y, scale, scale)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
                         it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
                     }
                     gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, scale, scale)
+                    gc.strokeRect(x, y, scale, scale)
                 }
-                y += 10
+                y += scale
             }
             y = 0.5
-            x += 10
+            x += scale
         }
     }
 
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.first.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * 10.0 + 1,it.y * 10.0 + 1,9.0,9.0))
+            shape = Shape.union(shape, Rectangle(it.x * scale + 1,it.y * scale + 1,scale - 1,scale - 1))
         }
         shape.fill = fo.first.color
-        shape.layoutX = fo.second.x * 10.0
-        shape.layoutY = fo.second.y * 10.0
+        shape.layoutX = fo.second.x * scale
+        shape.layoutY = fo.second.y * scale
         return shape
     }
 
@@ -289,8 +292,8 @@ class FactoryController {
     }
 
     private fun factoryMapSetup(){
-        canvas.width = factory.length.toDouble() * 10 + 1
-        canvas.height = factory.width.toDouble() * 10 + 1
+        canvas.width = factory.length * scale + 1
+        canvas.height = factory.width * scale + 1
 
         drawFactory(canvas, factory, currentDatePicker.value)
     }
@@ -312,7 +315,7 @@ class FactoryController {
         dateSlider.isVisible = isVisible
     }
 
-    private fun Double.toUserCoordinate() = (this / 10).toInt()
+    private fun Double.toUserCoordinate() = (this / scale).toInt()
     fun onErrorsButtonClick() {
         if (errorsButton.text == "Show Errors"){
             errorsButton.text = "Hide Errors"
@@ -367,8 +370,8 @@ class FactoryController {
     }
 
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        val x = ((e.sceneX - canvas.layoutX - leftAnchorPane.width) / scale).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height) / scale).toInt()
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
             infoTextField.text += "Excluded coordinate\n"
@@ -390,8 +393,8 @@ class FactoryController {
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        val x = ((e.sceneX - canvas.layoutX - leftAnchorPane.width) / scale).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height) / scale).toInt()
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
@@ -421,6 +424,16 @@ class FactoryController {
 
     fun onReleasedSlider() {
         currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
+        initialize()
+    }
+
+    fun onScrollCanvas(scrollEvent: ScrollEvent) {
+        if(scrollEvent.deltaY < 0){
+            if (scale != 150.0) scale++
+        }
+        else {
+            if(scale != 5.0) scale --
+        }
         initialize()
     }
 
