@@ -152,7 +152,7 @@ class ObjectCreateController {
             vBox.prefHeight = 150.0
             vBox.prefWidth = 200.0
             val scene = Scene(vBox)
-            createStage.title = "Add Object"
+            createStage.title = "Добавление объекта"
             createStage.scene = scene
             createStage.show()
         }
