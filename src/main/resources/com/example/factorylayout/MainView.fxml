@@ -10,12 +10,12 @@
    <children>
       <VBox prefHeight="180.0" prefWidth="200.0">
          <children>
-            <Button id="createNewProjectButton" fx:id="createButton" mnemonicParsing="false" onAction="#createNewProject" prefHeight="60.0" prefWidth="170.0" text="Create New Project">
+            <Button id="createNewProjectButton" fx:id="createButton" mnemonicParsing="false" onAction="#createNewProject" prefHeight="60.0" prefWidth="170.0" text="Создать новый проект">
                <VBox.margin>
                   <Insets left="15.0" right="15.0" top="20.0" />
                </VBox.margin>
             </Button>
-            <Button fx:id="openButton" mnemonicParsing="false" onAction="#openProject" prefHeight="60.0" prefWidth="170.0" text="Open From File">
+            <Button fx:id="openButton" mnemonicParsing="false" onAction="#openProject" prefHeight="60.0" prefWidth="170.0" text="Открыть из файла">
                <VBox.margin>
                   <Insets bottom="20.0" left="15.0" right="15.0" top="20.0" />
                </VBox.margin>
