@@ -282,9 +282,9 @@ class FactoryController {
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
             val pair = listView.items[index]
-            infoTextField.text = "name: ${pair.first.name}\n" +
-                    "start date: ${pair.first.dateStart.toCustomString()}\n" +
-                    "end date: ${pair.first.dateEnd.toCustomString()}"
+            infoTextField.text = "Имя: ${pair.first.name}\n" +
+                    "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
+                    "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
         }
     }
 
@@ -380,9 +380,9 @@ class FactoryController {
                                 && it.first.dateEnd >= currentDatePicker.value
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
-                    infoTextField.text += "name: ${pair.first.name}\n" +
-                            "start date: ${pair.first.dateStart.toCustomString()}\n" +
-                            "end date: ${pair.first.dateEnd.toCustomString()}"
+                    infoTextField.text += "Имя: ${pair.first.name}\n" +
+                            "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
+                            "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
                 } catch (_: Exception){}
             }
         }
