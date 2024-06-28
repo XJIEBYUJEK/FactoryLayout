@@ -298,7 +298,7 @@ class FactoryController {
     private fun textFieldSetup(){
         textField.text = ""
         textField.isVisible = false
-        errorsButton.text = "Show Errors"
+        errorsButton.text = "Показать ошибки"
         canvas.isVisible = true
         errorsLabel.isVisible = false
     }
@@ -314,13 +314,13 @@ class FactoryController {
 
     private fun Double.toUserCoordinate() = (this / 10).toInt()
     fun onErrorsButtonClick() {
-        if (errorsButton.text == "Show Errors"){
-            errorsButton.text = "Hide Errors"
+        if (errorsButton.text == "Показать ошибки"){
+            errorsButton.text = "Скрыть ошибки"
             textField.isVisible = true
             canvas.isVisible = false
         }
         else{
-            errorsButton.text = "Show Errors"
+            errorsButton.text = "Показать ошибки"
             textField.isVisible = false
             canvas.isVisible = true
         }
