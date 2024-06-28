@@ -126,7 +126,7 @@ class FactoryController {
             tempFactory.objects.remove(selectedItem)
 
             val insideEditButton = Button()
-            insideEditButton.text = "Edit"
+            insideEditButton.text = "Изменить"
             val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
