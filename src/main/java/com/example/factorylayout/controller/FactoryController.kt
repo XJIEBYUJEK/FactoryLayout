@@ -84,13 +84,13 @@ class FactoryController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(loader.load(), 200.0, 180.0)
         stage.scene = scene
-        stage.title = "Factory Layout Manager"
+        stage.title = "Планировщик Сборочного Цеха"
         stage.show()
     }
 
     fun onAddObjectPressed() {
         val stage = Stage()
-        stage.title = "Add Object"
+        stage.title = "Добавление объекта"
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("ObjectCreateView.fxml"))
         val root = loader.load<Any>() as Parent
         val scene = Scene(root)
@@ -131,7 +131,7 @@ class FactoryController {
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
-            stage.title = "Edit Object"
+            stage.title = "Изменение объекта"
             val textField = TextField()
             textField.text = selectedItem.first.name
             val colorPicker = ColorPicker()
