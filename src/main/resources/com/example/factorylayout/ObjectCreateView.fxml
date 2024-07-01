@@ -12,7 +12,7 @@
    <top>
       <AnchorPane prefHeight="50.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField fx:id="objectNameText" layoutX="31.0" layoutY="13.0" promptText="Object Name" />
+            <TextField fx:id="objectNameText" layoutX="31.0" layoutY="13.0" promptText="Имя объекта" />
             <ColorPicker fx:id="colorPicker" layoutX="790.0" layoutY="13.0" />
          </children>
       </AnchorPane>
@@ -20,8 +20,8 @@
    <bottom>
       <AnchorPane prefHeight="50.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="addButton" disable="true" layoutX="910.0" layoutY="13.0" mnemonicParsing="false" onAction="#onAddButtonClick" text="Add" />
-            <Button layoutX="14.0" layoutY="13.0" mnemonicParsing="false" onAction="#onCancelButtonClick" text="Cancel" />
+            <Button fx:id="addButton" disable="true" layoutX="910.0" layoutY="13.0" mnemonicParsing="false" onAction="#onAddButtonClick" text="Добавить" />
+            <Button layoutX="14.0" layoutY="13.0" mnemonicParsing="false" onAction="#onCancelButtonClick" text="Отменить" />
             <DatePicker fx:id="startDatePicker" layoutX="139.0" layoutY="13.0" onAction="#startDatePickerChanged" />
             <DatePicker fx:id="endDatePicker" layoutX="413.0" layoutY="13.0" onAction="#endDatePickerChanged" />
          </children>

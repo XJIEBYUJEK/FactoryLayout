@@ -17,20 +17,20 @@
    <top>
       <HBox fx:id="topHbox" prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="262.0" text="Add Object" />
-            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="293.0" text="Save Project" />
-            <Button mnemonicParsing="false" onAction="#onSaveAsButtonClicked" prefHeight="25.0" prefWidth="285.0" text="Save as ..." />
-            <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="290.0" text="Show Errors" />
+            <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="262.0" text="Добавить объект" />
+            <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="293.0" text="Сохранить проект" />
+            <Button mnemonicParsing="false" onAction="#onSaveAsButtonClicked" prefHeight="25.0" prefWidth="285.0" text="Сохранить как ..." />
+            <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="290.0" text="Показать ошибки" />
          </children>
       </HBox>
    </top>
    <bottom>
       <AnchorPane focusTraversable="true" prefHeight="30.0" prefWidth="1130.0" BorderPane.alignment="CENTER">
          <children>
-            <Button layoutX="20.0" layoutY="2.0" mnemonicParsing="false" onAction="#onBackPressed" text="Back" />
-            <DatePicker fx:id="currentDatePicker" layoutX="942.0" layoutY="2.0" onAction="#onCurrentDatePickerAction" promptText="Current Date" />
-            <DatePicker fx:id="startDatePicker" layoutX="118.0" layoutY="2.0" onAction="#onStartDatePickerAction" promptText="Start Date" />
-            <DatePicker fx:id="endDatePicker" layoutX="313.0" layoutY="2.0" onAction="#onEndDatePickerAction" promptText="End Date" />
+            <Button layoutX="20.0" layoutY="2.0" mnemonicParsing="false" onAction="#onBackPressed" text="Назад" />
+            <DatePicker fx:id="currentDatePicker" layoutX="942.0" layoutY="2.0" onAction="#onCurrentDatePickerAction" promptText="Текущая дата" />
+            <DatePicker fx:id="startDatePicker" layoutX="118.0" layoutY="2.0" onAction="#onStartDatePickerAction" promptText="Начальная дата" />
+            <DatePicker fx:id="endDatePicker" layoutX="313.0" layoutY="2.0" onAction="#onEndDatePickerAction" promptText="Конечная дата" />
             <Slider fx:id="dateSlider" layoutX="556.0" layoutY="7.0" onMouseDragged="#onDragSlider" onMouseReleased="#onReleasedSlider" prefHeight="14.0" prefWidth="299.0" visible="false" />
             <Label fx:id="errorsLabel" layoutX="530.0" layoutY="1.0" text="Project has errors!" textFill="#f50000" visible="false">
                <font>
@@ -52,8 +52,8 @@
       <AnchorPane fx:id="leftAnchorPane" prefHeight="940.0" prefWidth="143.0" BorderPane.alignment="CENTER">
          <children>
             <ListView fx:id="listView" layoutX="4.0" layoutY="7.0" prefHeight="444.0" prefWidth="130.0" />
-            <Button layoutX="4.0" layoutY="458.0" mnemonicParsing="false" onAction="#onEditButtonClick" prefHeight="25.0" prefWidth="130.0" text="Edit Selected Object" />
-            <Button layoutX="5.0" layoutY="493.0" mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="25.0" prefWidth="128.0" text="Delete Selected Object" />
+            <Button layoutX="4.0" layoutY="458.0" mnemonicParsing="false" onAction="#onEditButtonClick" prefHeight="25.0" prefWidth="130.0" text="Изменить объект" />
+            <Button layoutX="5.0" layoutY="493.0" mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="25.0" prefWidth="128.0" text="Удалить объект" />
             <TextArea fx:id="infoTextField" layoutX="4.0" layoutY="784.0" prefHeight="150.0" prefWidth="130.0" />
          </children>
       </AnchorPane>

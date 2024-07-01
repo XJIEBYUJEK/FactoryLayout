@@ -147,7 +147,7 @@ class ObjectCreateController {
         }
         val createStage = this.canvas.scene.window as Stage
         fun createExtraStage(){
-            insideAddButton.text = "Add"
+            insideAddButton.text = "Добавить"
             val vBox = VBox()
             vBox.spacing = 5.0
             vBox.alignment = Pos.CENTER
@@ -155,7 +155,7 @@ class ObjectCreateController {
             vBox.prefHeight = 150.0
             vBox.prefWidth = 200.0
             val scene = Scene(vBox)
-            createStage.title = "Add Object"
+            createStage.title = "Добавление объекта"
             createStage.scene = scene
             createStage.show()
         }
