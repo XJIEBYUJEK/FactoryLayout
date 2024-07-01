@@ -84,13 +84,13 @@ class FactoryController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(loader.load(), 200.0, 180.0)
         stage.scene = scene
-        stage.title = "Factory Layout Manager"
+        stage.title = "Планировщик Сборочного Цеха"
         stage.show()
     }
 
     fun onAddObjectPressed() {
         val stage = Stage()
-        stage.title = "Add Object"
+        stage.title = "Добавление объекта"
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("ObjectCreateView.fxml"))
         val root = loader.load<Any>() as Parent
         val scene = Scene(root)
@@ -126,12 +126,12 @@ class FactoryController {
             tempFactory.objects.remove(selectedItem)
 
             val insideEditButton = Button()
-            insideEditButton.text = "Edit"
+            insideEditButton.text = "Изменить"
             val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
-            stage.title = "Edit Object"
+            stage.title = "Изменение объекта"
             val textField = TextField()
             textField.text = selectedItem.first.name
             val colorPicker = ColorPicker()
@@ -282,9 +282,9 @@ class FactoryController {
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
             val pair = listView.items[index]
-            infoTextField.text = "name: ${pair.first.name}\n" +
-                    "start date: ${pair.first.dateStart.toCustomString()}\n" +
-                    "end date: ${pair.first.dateEnd.toCustomString()}"
+            infoTextField.text = "Имя: ${pair.first.name}\n" +
+                    "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
+                    "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
         }
     }
 
@@ -298,7 +298,7 @@ class FactoryController {
     private fun textFieldSetup(){
         textField.text = ""
         textField.isVisible = false
-        errorsButton.text = "Show Errors"
+        errorsButton.text = "Показать ошибки"
         canvas.isVisible = true
         errorsLabel.isVisible = false
     }
@@ -314,13 +314,13 @@ class FactoryController {
 
     private fun Double.toUserCoordinate() = (this / 10).toInt()
     fun onErrorsButtonClick() {
-        if (errorsButton.text == "Show Errors"){
-            errorsButton.text = "Hide Errors"
+        if (errorsButton.text == "Показать ошибки"){
+            errorsButton.text = "Скрыть ошибки"
             textField.isVisible = true
             canvas.isVisible = false
         }
         else{
-            errorsButton.text = "Show Errors"
+            errorsButton.text = "Показать ошибки"
             textField.isVisible = false
             canvas.isVisible = true
         }
@@ -380,9 +380,9 @@ class FactoryController {
                                 && it.first.dateEnd >= currentDatePicker.value
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
-                    infoTextField.text += "name: ${pair.first.name}\n" +
-                            "start date: ${pair.first.dateStart.toCustomString()}\n" +
-                            "end date: ${pair.first.dateEnd.toCustomString()}"
+                    infoTextField.text += "Имя: ${pair.first.name}\n" +
+                            "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
+                            "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
                 } catch (_: Exception){}
             }
         }

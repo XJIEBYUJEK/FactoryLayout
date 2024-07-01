@@ -11,7 +11,7 @@ class FactoryApplication : Application() {
     override fun start(stage: Stage) {
         val fxmlLoader = FXMLLoader(FactoryApplication::class.java.getResource("MainView.fxml"))
         val scene = Scene(fxmlLoader.load(), 200.0, 180.0)
-        stage.title = "Factory Layout Manager"
+        stage.title = "Планировщик Сборочного Цеха"
         stage.isResizable = false
         stage.scene = scene
         stage.show()

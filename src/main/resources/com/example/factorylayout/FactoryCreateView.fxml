@@ -14,9 +14,9 @@
    <top>
       <AnchorPane prefHeight="39.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField fx:id="widthText" layoutX="14.0" layoutY="8.0" promptText="Width" />
-            <TextField fx:id="lengthText" layoutX="179.0" layoutY="8.0" promptText="Length" />
-            <Button layoutX="345.0" layoutY="8.0" mnemonicParsing="false" onAction="#onCreateClick" text="Create" />
+            <TextField fx:id="widthText" layoutX="14.0" layoutY="8.0" promptText="Высота" />
+            <TextField fx:id="lengthText" layoutX="179.0" layoutY="8.0" promptText="Ширина" />
+            <Button layoutX="345.0" layoutY="8.0" mnemonicParsing="false" onAction="#onCreateClick" text="Отобразить" />
             <Label fx:id="warningLabel" layoutX="406.0" layoutY="11.0" prefHeight="17.0" prefWidth="38.0" />
          </children>
       </AnchorPane>
@@ -24,8 +24,8 @@
    <bottom>
       <AnchorPane prefHeight="34.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
-            <Button fx:id="saveButton" disable="true" layoutX="925.0" layoutY="5.0" mnemonicParsing="false" onAction="#saveFactoryLayout" prefHeight="25.0" prefWidth="61.0" text="Create" />
-            <Button layoutX="14.0" layoutY="5.0" mnemonicParsing="false" onAction="#onBackPressed" text="Back" />
+            <Button fx:id="saveButton" disable="true" layoutX="925.0" layoutY="5.0" mnemonicParsing="false" onAction="#saveFactoryLayout" prefHeight="25.0" prefWidth="61.0" text="Создать" />
+            <Button layoutX="14.0" layoutY="5.0" mnemonicParsing="false" onAction="#onBackPressed" text="Назад" />
          </children>
       </AnchorPane>
    </bottom>
