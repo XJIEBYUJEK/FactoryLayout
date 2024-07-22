@@ -388,8 +388,8 @@ class FactoryController {
     }
 
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        val x = (e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / 10
+        val y = (e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / 10
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
             infoTextField.text += "Координата вне цеха\n"
@@ -409,8 +409,8 @@ class FactoryController {
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
+        val x = (e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / 10
+        val y = (e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / 10
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
