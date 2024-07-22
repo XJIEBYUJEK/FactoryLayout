@@ -8,6 +8,7 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -61,10 +62,17 @@
       </AnchorPane>
    </bottom>
    <center>
-      <StackPane prefHeight="150.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <StackPane maxHeight="500.0" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="textField" prefHeight="500.0" prefWidth="200.0" />
-            <Canvas fx:id="canvas" height="500.0" onMouseClicked="#onMouseClickedInsideCanvas" onMouseExited="#onMouseExitedCanvas" onMouseMoved="#onMouseMovedInsideCanvas" width="1000.0" />
+            <BorderPane>
+               <center>
+                  <Canvas fx:id="canvas" height="470.0" onMouseClicked="#onMouseClickedInsideCanvas" onMouseExited="#onMouseExitedCanvas" onMouseMoved="#onMouseMovedInsideCanvas" width="1000.0" />
+               </center>
+               <top>
+                  <TextField fx:id="factoryTextField" editable="false" minHeight="30.0" BorderPane.alignment="CENTER" />
+               </top>
+            </BorderPane>
+            <TextArea fx:id="textField" />
          </children>
       </StackPane>
    </center>

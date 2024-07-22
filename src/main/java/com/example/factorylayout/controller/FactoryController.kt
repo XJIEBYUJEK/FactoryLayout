@@ -31,6 +31,9 @@ import java.time.LocalDate
 class FactoryController {
 
     @FXML
+    lateinit var factoryTextField: TextField
+
+    @FXML
     lateinit var topHbox: HBox
 
     @FXML
@@ -103,7 +106,6 @@ class FactoryController {
     }
 
     fun onSaveButtonClick() {
-        //File("${data.getFileName()}.json").writeText(factory.toJsonString())
         File(data.getFileName()).writeText(factory.toJsonString())
     }
 
@@ -239,8 +241,8 @@ class FactoryController {
             while (y < canvas.height - 0.5){
                 val dataX = x.toUserCoordinate()
                 val dataY = y.toUserCoordinate()
-                gc.stroke = Color.web("#DDDDDD")
                 gc.lineWidth = 1.0
+                gc.stroke = Color.web("#DDDDDD")
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
                     gc.fillRect(x, y, 10.0, 10.0)
@@ -253,6 +255,22 @@ class FactoryController {
                     gc.fill = colorInfo.first.color
                     gc.fillRect(x, y, 10.0, 10.0)
                     gc.strokeRect(x, y, 10.0, 10.0)
+                }
+                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
+                    gc.lineWidth = 2.0
+                    gc.stroke = Color.RED
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
+                        gc.strokeLine(x, y, x + 10, y)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
+                        gc.strokeLine(x, y + 10, x + 10, y + 10)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
+                        gc.strokeLine(x, y, x, y + 10)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
+                        gc.strokeLine(x + 10, y, x + 10, y + 10)
+                    }
                 }
                 y += 10
             }
@@ -282,15 +300,18 @@ class FactoryController {
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
             val pair = listView.items[index]
-            infoTextField.text = "Имя: ${pair.first.name}\n" +
-                    "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
-                    "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
+            infoTextField.text = objectInfoText(pair.first)
         }
     }
 
     private fun factoryMapSetup(){
         canvas.width = factory.length.toDouble() * 10 + 1
         canvas.height = factory.width.toDouble() * 10 + 1
+        factoryTextField.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
+                " Длина: ${factory.length}," +
+                " Ширина: ${factory.width}." +
+                " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
+                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length} м²"
 
         drawFactory(canvas, factory, currentDatePicker.value)
     }
@@ -352,10 +373,10 @@ class FactoryController {
             collisionsId.distinct().forEach{
                 val objectNumber = listView.items.indexOf(pair)
                 if (it == -1) {
-                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with FactoryLayout.\n"
+                    textField.text += "Объект $objectNumber. ${pair.first.name} наслаивается на границы цеха.\n"
                 } else {
                     val obj = listView.items.first{ obj -> obj.first.id == it}
-                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
+                    textField.text += "Объект $objectNumber. ${pair.first.name} имеет коллизии с объектом ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
                 }
             }
         }
@@ -371,7 +392,7 @@ class FactoryController {
         val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
-            infoTextField.text += "Excluded coordinate\n"
+            infoTextField.text += "Вырезанная координата\n"
         }else{
             if (textField.text == ""){
                 try {
@@ -380,9 +401,7 @@ class FactoryController {
                                 && it.first.dateEnd >= currentDatePicker.value
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
-                    infoTextField.text += "Имя: ${pair.first.name}\n" +
-                            "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
-                            "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
+                    infoTextField.text += objectInfoText(pair.first)
                 } catch (_: Exception){}
             }
         }
@@ -423,5 +442,18 @@ class FactoryController {
         currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
         initialize()
     }
+    private fun FactoryObject.objectArea() = this.coordinates.size
 
+    private fun objectInfoText(fo: FactoryObject): String = "Имя: ${fo.name}\n" +
+            "Начальная дата:\n ${fo.dateStart.toCustomString()}\n" +
+            "Конечная дата:\n ${fo.dateEnd.toCustomString()}\n" +
+            "Площадь: ${fo.objectArea()} м²"
+
+    private fun allObjectsArea(date: LocalDate): Int{
+        var area = 0
+        factory.objects.forEach {
+            if (it.first.dateStart <= date && it.first.dateEnd >= date) area += it.first.objectArea()
+        }
+        return area
+    }
 }
