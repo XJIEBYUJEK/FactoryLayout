@@ -311,7 +311,7 @@ class FactoryController {
                 " Длина: ${factory.length}," +
                 " Ширина: ${factory.width}." +
                 " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
-                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length} м²"
+                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
 
         drawFactory(canvas, factory, currentDatePicker.value)
     }
@@ -392,7 +392,7 @@ class FactoryController {
         val y = (e.sceneY - canvas.layoutY - topHbox.height).toInt() / 10
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
-            infoTextField.text += "Вырезанная координата\n"
+            infoTextField.text += "Координата вне цеха\n"
         }else{
             if (textField.text == ""){
                 try {
