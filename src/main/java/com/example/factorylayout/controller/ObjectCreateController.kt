@@ -173,8 +173,6 @@ class ObjectCreateController {
             vBox.spacing = 5.0
             vBox.alignment = Pos.CENTER
             vBox.children.addAll(group, dateSlider, insideAddButton)
-            vBox.prefHeight = 150.0
-            vBox.prefWidth = 200.0
             val scene = Scene(vBox)
             createStage.title = "Добавление объекта"
             createStage.scene = scene

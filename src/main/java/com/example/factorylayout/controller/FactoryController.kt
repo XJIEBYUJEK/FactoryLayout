@@ -10,6 +10,7 @@ import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Pos
+import javafx.print.PrinterJob
 import javafx.scene.Group
 import javafx.scene.Parent
 import javafx.scene.Scene
@@ -23,6 +24,7 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
+import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import java.io.File
@@ -79,7 +81,7 @@ class FactoryController {
     private var factory = data.getFactoryLayout()
     private var insideDateSlider = Slider()
 
-    private var scale = 10.0
+    private var scaleMain = 10.0
 
     @FXML
     fun initialize() {
@@ -137,7 +139,7 @@ class FactoryController {
             tempFactory.objects.remove(selectedItem)
             val insideEditButton = Button()
             insideEditButton.text = "Изменить"
-            val factoryCanvas = Canvas(factory.length * scale + 1, factory.width * scale + 1)
+            val factoryCanvas = Canvas(factory.length * scaleMain + 1, factory.width * scaleMain + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
@@ -151,7 +153,7 @@ class FactoryController {
             fun updateInsideSlider(){
                 insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
                 currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
-                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
             }
             insideStartDatePicker.setOnAction {
                 insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
@@ -168,7 +170,7 @@ class FactoryController {
             updateInsideSlider()
             insideDateSlider.setOnMouseDragged {
                 currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
-                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
             }
             val vBox = VBox()
             vBox.spacing = 10.0
@@ -179,15 +181,15 @@ class FactoryController {
             stage.isResizable = false
             stage.show()
             shape.setOnMouseDragged { e ->
-                shape.layoutX = ((e.sceneX - factoryCanvas.layoutX - canvasBorderPane.padding.left) / scale).toInt() * scale
-                shape.layoutY = ((e.sceneY - factoryCanvas.layoutY - colorPicker.height - textField.height - canvasBorderPane.padding.top) / scale).toInt() * scale
+                shape.layoutX = ((e.sceneX - factoryCanvas.layoutX - canvasBorderPane.padding.left) / scaleMain).toInt() * scaleMain
+                shape.layoutY = ((e.sceneY - factoryCanvas.layoutY - colorPicker.height - textField.height - canvasBorderPane.padding.top) / scaleMain).toInt() * scaleMain
                 val bounds = shape.boundsInParent
                 insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
             }
             insideEditButton.setOnAction {
                 val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / scale.toInt()
-                selectedItem.second.y = bounds.minY.toInt() / scale.toInt()
+                selectedItem.second.x = bounds.minX.toInt() / scaleMain.toInt()
+                selectedItem.second.y = bounds.minY.toInt() / scaleMain.toInt()
                 selectedItem.first.color = colorPicker.value
                 selectedItem.first.name = textField.text
                 selectedItem.first.dateStart = insideStartDatePicker.value
@@ -246,7 +248,7 @@ class FactoryController {
         initialize()
     }
 
-    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate){
+    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double){
         val gc = canvas.graphicsContext2D
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
@@ -262,8 +264,8 @@ class FactoryController {
 
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate()
-                val dataY = y.toUserCoordinate()
+                val dataX = x.toUserCoordinate(scale)
+                val dataY = y.toUserCoordinate(scale)
                 gc.lineWidth = 1.0
                 gc.stroke = Color.web("#DDDDDD")
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
@@ -305,11 +307,11 @@ class FactoryController {
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.first.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * scale + 1, it.y * scale + 1, scale - 1, scale - 1))
+            shape = Shape.union(shape, Rectangle(it.x * scaleMain + 1, it.y * scaleMain + 1, scaleMain - 1, scaleMain - 1))
         }
         shape.fill = fo.first.color
-        shape.layoutX = fo.second.x * scale
-        shape.layoutY = fo.second.y * scale
+        shape.layoutX = fo.second.x * scaleMain
+        shape.layoutY = fo.second.y * scaleMain
         return shape
     }
 
@@ -328,16 +330,16 @@ class FactoryController {
     }
 
     private fun factoryMapSetup(){
-        scale = min(min(canvasBorderPane.prefHeight/factory.width, canvasBorderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
-        canvas.width = factory.length * scale + 1
-        canvas.height = factory.width * scale + 1
+        scaleMain = min(min(canvasBorderPane.prefHeight/factory.width, canvasBorderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
+        canvas.width = factory.length * scaleMain + 1
+        canvas.height = factory.width * scaleMain + 1
         factoryTextField.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
                 " Длина: ${factory.length}," +
                 " Ширина: ${factory.width}." +
                 " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
                 " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
 
-        drawFactory(canvas, factory, currentDatePicker.value)
+        drawFactory(canvas, factory, currentDatePicker.value, scaleMain)
     }
 
     private fun textFieldSetup(){
@@ -357,7 +359,7 @@ class FactoryController {
         dateSlider.isVisible = isVisible
     }
 
-    private fun Double.toUserCoordinate() = (this / scale).toInt()
+    private fun Double.toUserCoordinate(scale: Double) = (this / scale).toInt()
     fun onErrorsButtonClick() {
         if (errorsButton.text == "Показать ошибки"){
             errorsButton.text = "Скрыть ошибки"
@@ -412,8 +414,8 @@ class FactoryController {
     }
 
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
-        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scale).toInt()
-        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scale).toInt()
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scaleMain).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scaleMain).toInt()
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
             infoTextField.text += "Координата вне цеха\n"
@@ -433,8 +435,8 @@ class FactoryController {
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
-        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scale).toInt()
-        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scale).toInt()
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scaleMain).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scaleMain).toInt()
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
@@ -489,6 +491,44 @@ class FactoryController {
             if (it.first.dateStart <= date && it.first.dateEnd >= date) area += it.first.objectArea()
         }
         return area
+    }
+
+    fun onPrintButtonClick() {
+        val printScale = (scaleMain / 4).toInt().toDouble()
+        val createStage = Stage()
+        val vBox = VBox()
+        val label1 = Label()
+        label1.font = Font.font(15.0)
+        label1.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
+                " Длина: ${factory.length}," +
+                " Ширина: ${factory.width}."
+        val label2 = Label()
+        label2.font = Font.font(15.0)
+        label2.text = " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
+                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
+        val printCanvas = Canvas(factory.length * printScale + 1, factory.width * printScale + 1)
+        drawFactory(printCanvas, factory, currentDatePicker.value, printScale)
+        val printButton = Button()
+        printButton.text = "Печать"
+        printButton.setOnMouseClicked{
+            val job = PrinterJob.createPrinterJob()
+            job?.showPrintDialog(createStage)
+            job?.printPage(vBox)
+            job?.endJob()
+        }
+        vBox.spacing = 10.0
+        vBox.alignment = Pos.CENTER
+        val vBox2 = VBox()
+        vBox2.spacing = 10.0
+        vBox2.alignment = Pos.CENTER
+        vBox.children.addAll(label1, label2, printCanvas)
+        vBox2.children.addAll(vBox, printButton)
+        val scene = Scene(vBox2)
+        createStage.title = "Печать"
+        createStage.scene = scene
+        createStage.isResizable = false
+        createStage.show()
+
     }
 
 

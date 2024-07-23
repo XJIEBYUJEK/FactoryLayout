@@ -40,13 +40,17 @@
       </VBox>
    </left>
    <top>
-      <HBox fx:id="topHbox" prefHeight="30.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
+      <HBox fx:id="topHbox" prefHeight="35.0" prefWidth="1000.0" BorderPane.alignment="CENTER">
          <children>
             <Button maxWidth="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#onAddObjectPressed" prefHeight="25.0" prefWidth="262.0" text="Добавить объект" />
             <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="293.0" text="Сохранить проект" />
             <Button mnemonicParsing="false" onAction="#onSaveAsButtonClicked" prefHeight="25.0" prefWidth="285.0" text="Сохранить как ..." />
             <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="290.0" text="Показать ошибки" />
+            <Button mnemonicParsing="false" onAction="#onPrintButtonClick" prefHeight="25.0" prefWidth="290.0" text="Печать" />
          </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
       </HBox>
    </top>
    <bottom>
