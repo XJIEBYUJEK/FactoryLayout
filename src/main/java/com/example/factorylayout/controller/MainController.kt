@@ -32,8 +32,12 @@ class MainController {
         val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryCreateView.fxml"))
         val root = loader.load<Any>() as Parent
         val scene = Scene(root)
-        stage.scene = scene
-        stage.show()
+        val newStage = Stage()
+        newStage.title = stage.title
+        newStage.scene = scene
+        newStage.isResizable = false
+        newStage.show()
+        stage.close()
     }
 
     @FXML
@@ -51,9 +55,12 @@ class MainController {
             data.setFileName(file.path)
             val loader = FXMLLoader(FactoryApplication::class.java.getResource("FactoryView.fxml"))
             val scene = Scene(loader.load() as Parent)
-            stage.scene = scene
-            stage.title += " ${file.name}"
-            stage.show()
+            val newStage = Stage()
+            newStage.title = stage.title + " ${file.name}"
+            newStage.scene = scene
+            newStage.isResizable = false
+            newStage.show()
+            stage.close()
         } catch (e: Exception){
             val alert = Alert(Alert.AlertType.ERROR, "Incorrect file content\n$e")
             alert.show()

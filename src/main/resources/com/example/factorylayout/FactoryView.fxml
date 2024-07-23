@@ -16,22 +16,26 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="1130.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1100.0" prefWidth="2100.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.factorylayout.controller.FactoryController">
    <left>
       <VBox fx:id="leftVbox" prefHeight="432.0" prefWidth="130.0" BorderPane.alignment="CENTER">
          <children>
-            <ListView fx:id="listView" prefHeight="305.0" prefWidth="130.0" />
+            <ListView fx:id="listView" prefHeight="478.0" prefWidth="130.0" />
             <Button mnemonicParsing="false" onAction="#onEditButtonClick" prefHeight="25.0" prefWidth="403.0" text="Изменить объект">
                <VBox.margin>
                   <Insets bottom="1.0" left="2.0" right="1.0" top="2.0" />
                </VBox.margin>
             </Button>
-            <Button mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="25.0" prefWidth="406.0" text="Удалить объект">
+            <Button mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="27.0" prefWidth="128.0" text="Удалить объект">
                <VBox.margin>
                   <Insets bottom="2.0" left="1.0" right="1.0" />
                </VBox.margin>
             </Button>
-            <TextArea fx:id="infoTextField" prefHeight="150.0" prefWidth="130.0" />
+            <AnchorPane prefHeight="556.0" prefWidth="130.0">
+               <children>
+                  <TextArea fx:id="infoTextField" layoutY="263.0" prefHeight="295.0" prefWidth="130.0" />
+               </children>
+            </AnchorPane>
          </children>
       </VBox>
    </left>
@@ -62,17 +66,29 @@
       </AnchorPane>
    </bottom>
    <center>
-      <StackPane maxHeight="500.0" BorderPane.alignment="CENTER">
+      <StackPane maxHeight="1090.0" prefHeight="1090.0" prefWidth="1970.0" BorderPane.alignment="CENTER">
          <children>
-            <BorderPane>
+            <BorderPane fx:id="canvasBorderPane" minHeight="-Infinity" minWidth="-Infinity" prefHeight="1040.0" prefWidth="1970.0">
                <center>
-                  <Canvas fx:id="canvas" height="470.0" onMouseClicked="#onMouseClickedInsideCanvas" onMouseExited="#onMouseExitedCanvas" onMouseMoved="#onMouseMovedInsideCanvas" width="1000.0" />
+                  <Canvas fx:id="canvas" height="990.0" onMouseClicked="#onMouseClickedInsideCanvas" onMouseExited="#onMouseExitedCanvas" onMouseMoved="#onMouseMovedInsideCanvas" onScroll="#onScrollCanvas" width="1950.0" />
                </center>
                <top>
                   <TextField fx:id="factoryTextField" editable="false" minHeight="30.0" BorderPane.alignment="CENTER" />
                </top>
+               <StackPane.margin>
+                  <Insets />
+               </StackPane.margin>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
             </BorderPane>
-            <TextArea fx:id="textField" />
+            <TextArea fx:id="textField">
+               <StackPane.margin>
+                  <Insets />
+               </StackPane.margin>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding></TextArea>
          </children>
       </StackPane>
    </center>
