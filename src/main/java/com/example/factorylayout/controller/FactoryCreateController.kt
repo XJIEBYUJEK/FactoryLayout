@@ -41,11 +41,13 @@ class FactoryCreateController {
 
     private val data = SingletonData.getInstance()
 
+    private var size = 10.0
+
     @FXML
     fun onCreateClick() {
         warningLabel.text = ""
-        val width = widthText.text.toDoubleOrNull()?.times(10)
-        val length = lengthText.text.toDoubleOrNull()?.times(10)
+        val width = widthText.text.toDoubleOrNull()?.times(size)
+        val length = lengthText.text.toDoubleOrNull()?.times(size)
         if (width != null && length != null && width > 0 && width <= 500 && length > 0 && length <= 1000){
             saveButton.isDisable = false
             canvas.width = length + 1
@@ -61,13 +63,13 @@ class FactoryCreateController {
                 gc.moveTo(x, 0.0)
                 gc.lineTo(x, width)
                 gc.stroke()
-                x += 10.0
+                x += size
             }
             while (y <= width + 0.5) {
                 gc.moveTo(0.0, y)
                 gc.lineTo(length, y)
                 gc.stroke()
-                y += 10.0
+                y += size
             }
         }
         else {
@@ -95,10 +97,10 @@ class FactoryCreateController {
 
     private fun colorPixels(e: MouseEvent, eraser: Boolean){
         val gc = canvas.getGraphicsContext2D()
-        val x = e.x - e.x % 10
-        val y = e.y - e.y % 10
+        val x = e.x - e.x % size
+        val y = e.y - e.y % size
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
-            val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
+            val coordinate = Coordinate(x.toInt() / size.toInt(), y.toInt() / size.toInt())
             if (eraser){
                 gc.fill =  Color.WHITE
                 coordinateList.remove(coordinate)
@@ -108,7 +110,7 @@ class FactoryCreateController {
                 coordinateList.add(coordinate)
                 coordinateList = coordinateList.distinct().toMutableList()
             }
-            gc.fillRect(x + 1,y + 1,9.0,9.0)
+            gc.fillRect(x + 1, y + 1, size - 1, size - 1)
         }
     }
 

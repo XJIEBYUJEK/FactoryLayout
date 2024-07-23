@@ -21,6 +21,7 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
+import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import java.io.File
@@ -72,6 +73,8 @@ class FactoryController {
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
     private var insideDateSlider = Slider()
+
+    private var size = 10.0
 
     @FXML
     fun initialize() {
@@ -129,7 +132,7 @@ class FactoryController {
 
             val insideEditButton = Button()
             insideEditButton.text = "Изменить"
-            val factoryCanvas = Canvas(factory.length * 10.0 + 1, factory.width * 10.0 + 1)
+            val factoryCanvas = Canvas(factory.length * size + 1, factory.width * size + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
@@ -138,33 +141,48 @@ class FactoryController {
             textField.text = selectedItem.first.name
             val colorPicker = ColorPicker()
             colorPicker.value = selectedItem.first.color
+            val currentDateLabel = Label()
             val insideStartDatePicker = DatePicker(selectedItem.first.dateStart)
+            fun updateInsideSlider(){
+                insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
+                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+            }
+            insideStartDatePicker.setOnAction {
+                insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
+                updateInsideSlider()
+            }
             val insideEndDatePicker = DatePicker(selectedItem.first.dateEnd)
-            val hBox = HBox(insideStartDatePicker, insideEndDatePicker)
+            insideEndDatePicker.setOnAction {
+                insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
+                updateInsideSlider()
+            }
+            val hBox = HBox(insideStartDatePicker, insideEndDatePicker, currentDateLabel)
             insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
             insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
-            insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
-            insideDateSlider.setOnMouseReleased {
+            updateInsideSlider()
+            insideDateSlider.setOnMouseDragged {
+                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
                 drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             }
             val vBox = VBox()
-            vBox.spacing = 5.0
+            vBox.spacing = 10.0
             vBox.alignment = Pos.CENTER
             vBox.children.addAll(textField, colorPicker, group, hBox, insideDateSlider, insideEditButton)
             val scene = Scene(vBox)
             stage.scene = scene
+            stage.isResizable = false
             stage.show()
-            drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             shape.setOnMouseDragged { e ->
-                shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-                shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+                shape.layoutX = ((e.sceneX - factoryCanvas.layoutX) / size).toInt() * size
+                shape.layoutY = ((e.sceneY - factoryCanvas.layoutY - colorPicker.height - textField.height) / size).toInt() * size
                 val bounds = shape.boundsInParent
                 insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
             }
             insideEditButton.setOnAction {
                 val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / 10
-                selectedItem.second.y = bounds.minY.toInt() / 10
+                selectedItem.second.x = bounds.minX.toInt() / size.toInt()
+                selectedItem.second.y = bounds.minY.toInt() / size.toInt()
                 selectedItem.first.color = colorPicker.value
                 selectedItem.first.name = textField.text
                 selectedItem.first.dateStart = insideStartDatePicker.value
@@ -224,7 +242,7 @@ class FactoryController {
     }
 
     private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate){
-        val gc = canvas.getGraphicsContext2D()
+        val gc = canvas.graphicsContext2D
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
@@ -245,48 +263,48 @@ class FactoryController {
                 gc.stroke = Color.web("#DDDDDD")
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, size, size)
+                    gc.strokeRect(x, y, size, size)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
                         it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
                     }
                     gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, size, size)
+                    gc.strokeRect(x, y, size, size)
                 }
                 if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     gc.lineWidth = 2.0
                     gc.stroke = Color.RED
                     if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
-                        gc.strokeLine(x, y, x + 10, y)
+                        gc.strokeLine(x, y, x + size, y)
                     }
                     if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
-                        gc.strokeLine(x, y + 10, x + 10, y + 10)
+                        gc.strokeLine(x, y + size, x + size, y + size)
                     }
                     if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
-                        gc.strokeLine(x, y, x, y + 10)
+                        gc.strokeLine(x, y, x, y + size)
                     }
                     if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
-                        gc.strokeLine(x + 10, y, x + 10, y + 10)
+                        gc.strokeLine(x + size, y, x + size, y + size)
                     }
                 }
-                y += 10
+                y += size
             }
             y = 0.5
-            x += 10
+            x += size
         }
     }
 
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.first.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * 10.0 + 1,it.y * 10.0 + 1,9.0,9.0))
+            shape = Shape.union(shape, Rectangle(it.x * size + 1, it.y * size + 1, size - 1, size - 1))
         }
         shape.fill = fo.first.color
-        shape.layoutX = fo.second.x * 10.0
-        shape.layoutY = fo.second.y * 10.0
+        shape.layoutX = fo.second.x * size
+        shape.layoutY = fo.second.y * size
         return shape
     }
 
@@ -305,8 +323,8 @@ class FactoryController {
     }
 
     private fun factoryMapSetup(){
-        canvas.width = factory.length.toDouble() * 10 + 1
-        canvas.height = factory.width.toDouble() * 10 + 1
+        canvas.width = factory.length * size + 1
+        canvas.height = factory.width * size + 1
         factoryTextField.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
                 " Длина: ${factory.length}," +
                 " Ширина: ${factory.width}." +
@@ -333,7 +351,7 @@ class FactoryController {
         dateSlider.isVisible = isVisible
     }
 
-    private fun Double.toUserCoordinate() = (this / 10).toInt()
+    private fun Double.toUserCoordinate() = (this / size).toInt()
     fun onErrorsButtonClick() {
         if (errorsButton.text == "Показать ошибки"){
             errorsButton.text = "Скрыть ошибки"
@@ -388,8 +406,8 @@ class FactoryController {
     }
 
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / 10
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / size).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / size).toInt()
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
             infoTextField.text += "Координата вне цеха\n"
@@ -409,8 +427,8 @@ class FactoryController {
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
-        val x = (e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / 10
-        val y = (e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / 10
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / size).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / size).toInt()
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
@@ -456,4 +474,6 @@ class FactoryController {
         }
         return area
     }
+
+
 }

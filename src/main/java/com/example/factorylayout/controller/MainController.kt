@@ -37,7 +37,7 @@ class MainController {
     }
 
     @FXML
-    fun openProject() {  //TODO add explorer
+    fun openProject() {
         val stage = this.openButton.scene.window as Stage
         val fileChooser = FileChooser()
         fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("json Files", "*.json"))

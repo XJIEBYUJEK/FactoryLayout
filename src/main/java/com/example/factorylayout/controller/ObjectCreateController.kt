@@ -45,6 +45,8 @@ class ObjectCreateController {
 
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
 
+    private var size = 10.0
+
     @FXML
     fun initialize() {
         colorPicker.value = Color.BLACK
@@ -52,8 +54,8 @@ class ObjectCreateController {
     }
 
     private fun canvasSetup(){
-        canvas.width = factory.length.toDouble() * 10 + 1
-        canvas.height = factory.width.toDouble() * 10 + 1
+        canvas.width = factory.length * size + 1
+        canvas.height = factory.width * size + 1
         val gc = canvas.getGraphicsContext2D()
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
@@ -67,13 +69,29 @@ class ObjectCreateController {
                 gc.lineWidth = 1.0
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
-                    gc.strokeRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, size, size)
+                    gc.strokeRect(x, y, size, size)
                 }
-                y += 10
+                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
+                    gc.lineWidth = 2.0
+                    gc.stroke = Color.RED
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
+                        gc.strokeLine(x, y, x + size, y)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
+                        gc.strokeLine(x, y + size, x + size, y + size)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
+                        gc.strokeLine(x, y, x, y + size)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
+                        gc.strokeLine(x + size, y, x + size, y + size)
+                    }
+                }
+                y += size
             }
             y = 0.5
-            x += 10
+            x += size
         }
     }
 
@@ -94,11 +112,11 @@ class ObjectCreateController {
     }
 
     private fun colorPixels(e: MouseEvent, eraser: Boolean){
-        val gc = canvas.getGraphicsContext2D()
-        val x = e.x - e.x % 10
-        val y = e.y - e.y % 10
+        val gc = canvas.graphicsContext2D
+        val x = e.x - e.x % size
+        val y = e.y - e.y % size
         if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
-            val coordinate = Coordinate(x.toInt() / 10, y.toInt() / 10)
+            val coordinate = Coordinate(x.toInt() / size.toInt(), y.toInt() / size.toInt())
             if (!factory.excludedCoordinates.contains(coordinate)){
                 if (eraser){
                     gc.fill =  Color.WHITE
@@ -109,7 +127,7 @@ class ObjectCreateController {
                     coordinateList.add(coordinate)
                     coordinateList = coordinateList.distinct().toMutableList()
                 }
-                gc.fillRect(x + 1,y + 1,9.0,9.0)
+                gc.fillRect(x + 1, y + 1, size - 1, size - 1)
             }
         }
         canAddCheck()
@@ -133,13 +151,13 @@ class ObjectCreateController {
         data.setFactoryObject(factoryObject)
 
         val insideAddButton = Button()
-        val factoryCanvas = Canvas(factory.length.toDouble() * 10 + 1, factory.width.toDouble() * 10 + 1)
+        val factoryCanvas = Canvas(factory.length * size + 1, factory.width * size + 1)
         val shape = createShape(factoryObject)
         val group = Group(factoryCanvas, shape)
         dateSlider.min = startDatePicker.value.toEpochDay().toDouble()
         dateSlider.max = endDatePicker.value.toEpochDay().toDouble()
         dateSlider.value = startDatePicker.value.toEpochDay().toDouble()
-        dateSlider.setOnMouseReleased {
+        dateSlider.setOnMouseDragged {
             drawFactory(factoryCanvas)
         }
         val createStage = this.canvas.scene.window as Stage
@@ -154,19 +172,20 @@ class ObjectCreateController {
             val scene = Scene(vBox)
             createStage.title = "Добавление объекта"
             createStage.scene = scene
+            createStage.isResizable = false
             createStage.show()
         }
         createExtraStage()
         drawFactory(factoryCanvas)
         shape.setOnMouseDragged { e ->
-            shape.layoutX = (e.sceneX.toInt() / 20) * 10.0
-            shape.layoutY = (e.sceneY.toInt() / 20) * 10.0
+            shape.layoutX = ((e.sceneX - factoryCanvas.layoutX) / size).toInt() * size
+            shape.layoutY = ((e.sceneY - factoryCanvas.layoutY) / size).toInt() * size
             val bounds = shape.boundsInParent
             insideAddButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
         }
         insideAddButton.setOnAction {
             val bounds = shape.boundsInParent
-            val factoryPair = Pair(factoryObject, Coordinate(bounds.minX.toInt() / 10, bounds.minY.toInt() / 10))
+            val factoryPair = Pair(factoryObject, Coordinate(bounds.minX.toInt() / size.toInt(), bounds.minY.toInt() / size.toInt()))
             factory.objects.add(factoryPair)
             data.setFactoryLayout(factory)
             createStage.close()
@@ -174,7 +193,7 @@ class ObjectCreateController {
     }
 
     private fun drawFactory(canvas: Canvas){
-        val gc = canvas.getGraphicsContext2D()
+        val gc = canvas.graphicsContext2D
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
@@ -193,30 +212,46 @@ class ObjectCreateController {
                 val dataY = y.toUserCoordinate()
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
-                    gc.fillRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, size, size)
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
                         it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
                     }
                     gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, 10.0, 10.0)
+                    gc.fillRect(x, y, size, size)
                 }
-                y += 10
+                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
+                    gc.lineWidth = 2.0
+                    gc.stroke = Color.RED
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
+                        gc.strokeLine(x, y, x + size, y)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
+                        gc.strokeLine(x, y + size, x + size, y + size)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
+                        gc.strokeLine(x, y, x, y + size)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
+                        gc.strokeLine(x + size, y, x + size, y + size)
+                    }
+                }
+                y += size
             }
             y = 0.5
-            x += 10
+            x += size
         }
     }
     private fun createShape(fo: FactoryObject): Shape{
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * 10.0 + 1,it.y * 10.0 + 1,9.0,9.0))
+            shape = Shape.union(shape, Rectangle(it.x * size + 1, it.y * size + 1, size - 1, size - 1))
         }
         shape.fill = fo.color
         return shape
     }
-    private fun Double.toUserCoordinate() = (this / 10).toInt()
+    private fun Double.toUserCoordinate() = (this / size).toInt()
     @FXML
     fun onCancelButtonClick() {
         val stage = this.canvas.scene.window as Stage
