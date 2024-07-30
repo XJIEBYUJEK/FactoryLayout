@@ -2,20 +2,21 @@ package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
 import com.example.factorylayout.data.SingletonData
-import com.example.factorylayout.model.Coordinate
-import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.factory.FactoryObjectCellFactory
+import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
+import com.example.factorylayout.model.FactoryObject
 import javafx.collections.FXCollections
+import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.print.PrinterJob
-import javafx.scene.Group
-import javafx.scene.Parent
-import javafx.scene.Scene
+import javafx.scene.*
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
+import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
@@ -27,9 +28,12 @@ import javafx.scene.shape.Shape
 import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+import javafx.stage.Window
 import java.io.File
+import java.io.IOException
 import java.nio.file.Paths
 import java.time.LocalDate
+import javax.imageio.ImageIO
 import kotlin.math.min
 
 
@@ -80,6 +84,8 @@ class FactoryController {
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
     private var insideDateSlider = Slider()
+
+    private var previousSavePath: String? = null
 
     private var scaleMain = 10.0
 
@@ -330,7 +336,7 @@ class FactoryController {
     }
 
     private fun factoryMapSetup(){
-        scaleMain = min(min(canvasBorderPane.prefHeight/factory.width, canvasBorderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
+        scaleMain = min(min((canvasBorderPane.prefHeight-factoryTextField.prefHeight*2)/factory.width, canvasBorderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
         canvas.width = factory.length * scaleMain + 1
         canvas.height = factory.width * scaleMain + 1
         factoryTextField.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
@@ -393,7 +399,6 @@ class FactoryController {
                             }
                         }
                     }
-
                 }
             }
             collisionsId.distinct().forEach{
@@ -431,7 +436,6 @@ class FactoryController {
                 } catch (_: Exception){}
             }
         }
-
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
@@ -494,27 +498,29 @@ class FactoryController {
     }
 
     fun onPrintButtonClick() {
-        val printScale = (scaleMain / 4).toInt().toDouble()
+        val printScale = (scaleMain / 1.5).toInt().toDouble()
         val createStage = Stage()
         val vBox = VBox()
         val label1 = Label()
-        label1.font = Font.font(15.0)
+        label1.font = Font.font(20.0)
         label1.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
                 " Длина: ${factory.length}," +
                 " Ширина: ${factory.width}."
         val label2 = Label()
-        label2.font = Font.font(15.0)
+        label2.font = Font.font(20.0)
         label2.text = " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
                 " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
         val printCanvas = Canvas(factory.length * printScale + 1, factory.width * printScale + 1)
         drawFactory(printCanvas, factory, currentDatePicker.value, printScale)
         val printButton = Button()
-        printButton.text = "Печать"
+        printButton.text = "Сохранить"
         printButton.setOnMouseClicked{
-            val job = PrinterJob.createPrinterJob()
+            /*val job = PrinterJob.createPrinterJob()
             job?.showPrintDialog(createStage)
             job?.printPage(vBox)
-            job?.endJob()
+            job?.endJob()*/
+            saveAsPng(vBox, createStage)
+            createStage.close()
         }
         vBox.spacing = 10.0
         vBox.alignment = Pos.CENTER
@@ -523,13 +529,32 @@ class FactoryController {
         vBox2.alignment = Pos.CENTER
         vBox.children.addAll(label1, label2, printCanvas)
         vBox2.children.addAll(vBox, printButton)
+        VBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
+        VBox.setMargin(printButton, Insets(0.0,10.0,10.0,10.0))
         val scene = Scene(vBox2)
-        createStage.title = "Печать"
+        createStage.title = "Сохранить изображение"
         createStage.scene = scene
         createStage.isResizable = false
         createStage.show()
-
     }
 
+    private fun saveAsPng(node: Node, stage: Window) = saveAsPng(node, stage, SnapshotParameters())
 
+    private fun saveAsPng(node: Node, stage: Window, ssp: SnapshotParameters?) {
+        val image: WritableImage = node.snapshot(ssp, null)
+        val fileChooser = FileChooser()
+        fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("Image", "*.png"))
+        val currentPath = if (previousSavePath != null)
+            previousSavePath!!
+        else
+            Paths.get(".").toAbsolutePath().normalize().toString()
+        fileChooser.initialDirectory = File(currentPath)
+        val file = fileChooser.showSaveDialog(stage)
+        previousSavePath = file.path.split("\\${file.name}")[0]
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+        } catch (e: IOException) {
+            // TODO: handle exception here
+        }
+    }
 }
