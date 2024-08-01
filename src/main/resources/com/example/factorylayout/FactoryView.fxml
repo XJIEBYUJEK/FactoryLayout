@@ -46,7 +46,7 @@
             <Button mnemonicParsing="false" onAction="#onSaveButtonClick" prefHeight="25.0" prefWidth="293.0" text="Сохранить проект" />
             <Button mnemonicParsing="false" onAction="#onSaveAsButtonClicked" prefHeight="25.0" prefWidth="285.0" text="Сохранить как ..." />
             <Button fx:id="errorsButton" mnemonicParsing="false" onAction="#onErrorsButtonClick" prefHeight="25.0" prefWidth="290.0" text="Показать ошибки" />
-            <Button mnemonicParsing="false" onAction="#onPrintButtonClick" prefHeight="25.0" prefWidth="290.0" text="Создать скриншот сцены" />
+            <Button mnemonicParsing="false" onAction="#onPrintButtonClick" prefHeight="25.0" prefWidth="290.0" text="Создать скриншот выбранной даты" />
          </children>
          <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />

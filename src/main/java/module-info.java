@@ -5,6 +5,8 @@ module com.example.factorylayout {
     requires kotlinx.serialization.core;
     requires kotlinx.serialization.json;
     requires javafx.swing;
+    requires poi;
+    requires poi.ooxml;
 
 
     opens com.example.factorylayout to javafx.fxml;

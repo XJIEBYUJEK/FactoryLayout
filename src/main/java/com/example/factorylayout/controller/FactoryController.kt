@@ -12,7 +12,6 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.print.PrinterJob
 import javafx.scene.*
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
@@ -29,7 +28,13 @@ import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import javafx.stage.Window
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
+import org.apache.poi.ss.usermodel.*
+import org.apache.poi.xssf.usermodel.XSSFCellStyle
+import org.apache.poi.xssf.usermodel.XSSFColor
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.file.Paths
 import java.time.LocalDate
@@ -524,12 +529,22 @@ class FactoryController {
         }
         vBox.spacing = 10.0
         vBox.alignment = Pos.CENTER
+        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+       /* val legendListView = ListView(currentDateObjects)
+        legendListView.setCellFactory {FactoryObjectCellFactory()}
+        val hBox = HBox()
+        hBox.children.addAll(printCanvas, legendListView)*/
         val vBox2 = VBox()
         vBox2.spacing = 10.0
         vBox2.alignment = Pos.CENTER
+        //vBox.children.addAll(label1, label2, hBox)
         vBox.children.addAll(label1, label2, printCanvas)
         vBox2.children.addAll(vBox, printButton)
+        //HBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
         VBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
+        //HBox.setMargin(legendListView, Insets(0.0,10.0,10.0,10.0))
         VBox.setMargin(printButton, Insets(0.0,10.0,10.0,10.0))
         val scene = Scene(vBox2)
         createStage.title = "Сохранить изображение"
@@ -556,5 +571,73 @@ class FactoryController {
         } catch (e: IOException) {
             // TODO: handle exception here
         }
+        createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
+        /*val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+        val legendListView = ListView(currentDateObjects)
+        legendListView.setCellFactory {FactoryObjectCellFactory()}
+        val vBox = VBox()
+        //vBox.prefWidth = 500.0
+        //vBox.prefHeight = 500.0
+        vBox.children.addAll(legendListView)
+        val scene = Scene(vBox)
+        val secondImage: WritableImage = vBox.snapshot(ssp, null)
+        val secondFile = File("$previousSavePath\\legend_of_${file.name}")
+        createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(secondImage, null), "png", secondFile)
+        } catch (e: IOException) {
+            // TODO: handle exception here
+        }*/
+    }
+
+    private fun createSpreadsheet(file: File){
+        val workbook = XSSFWorkbook()
+        val spreadsheet: Sheet = workbook.createSheet("legend")
+        var row: Row = spreadsheet.createRow(0)
+        row.createCell(0).setCellValue("Цвет")
+        row.createCell(1).setCellValue("Имя")
+        row.createCell(2).setCellValue("Начальная дата")
+        row.createCell(3).setCellValue("Конечная дата")
+        row.createCell(4).setCellValue("Площадь")
+        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+        var index = 1
+
+        if (currentDateObjects.isNotEmpty()){
+            for (i in currentDateObjects){
+                val color = i.first.color
+                val red = (color.red * 255).toInt()
+                val green = (color.green * 255).toInt()
+                val blue = (color.blue * 255).toInt()
+                val rgb = byteArrayOf(red.toByte(), green.toByte(), blue.toByte())
+                val xssfColor = XSSFColor(rgb, null)
+                val style:XSSFCellStyle = workbook.createCellStyle()
+
+                style.setFillForegroundColor(xssfColor)
+                style.fillPattern = FillPatternType.SOLID_FOREGROUND
+
+                row = spreadsheet.createRow(index)
+                row.createCell(0).cellStyle = style
+                row.createCell(1).setCellValue(i.first.name)
+                row.createCell(2).setCellValue(i.first.dateStart.toCustomString())
+                row.createCell(3).setCellValue(i.first.dateEnd.toCustomString())
+                row.createCell(4).setCellValue(i.first.coordinates.size.toString())
+                index++
+            }
+        }
+        spreadsheet.autoSizeColumn(0)
+        spreadsheet.autoSizeColumn(1)
+        spreadsheet.autoSizeColumn(2)
+        spreadsheet.autoSizeColumn(3)
+        row = spreadsheet.createRow(index)
+        row.createCell(0).setCellValue("Цех: ${data.getFileName().split(".")[0].split("\\").last()}."
+                + " Дата: ${currentDatePicker.value.toCustomString()}"
+        )
+        val stream = FileOutputStream(file)
+        workbook.write(stream)
+        stream.close()
     }
 }
