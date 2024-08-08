@@ -2,41 +2,59 @@ package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
 import com.example.factorylayout.data.SingletonData
-import com.example.factorylayout.model.Coordinate
-import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.factory.FactoryObjectCellFactory
+import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
+import com.example.factorylayout.model.FactoryObject
 import javafx.collections.FXCollections
+import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.Group
-import javafx.scene.Parent
-import javafx.scene.Scene
+import javafx.scene.*
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.*
+import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
-import javafx.scene.layout.AnchorPane
+import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
+import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
+import javafx.stage.Window
+import org.apache.poi.hssf.usermodel.HSSFWorkbook
+import org.apache.poi.ss.usermodel.*
+import org.apache.poi.xssf.usermodel.XSSFCellStyle
+import org.apache.poi.xssf.usermodel.XSSFColor
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.file.Paths
 import java.time.LocalDate
+import javax.imageio.ImageIO
+import kotlin.math.min
 
 
 class FactoryController {
 
     @FXML
+    lateinit var canvasBorderPane: BorderPane
+
+    @FXML
+    lateinit var factoryTextField: TextField
+
+    @FXML
     lateinit var topHbox: HBox
 
     @FXML
-    lateinit var leftAnchorPane: AnchorPane
+    lateinit var leftVbox: VBox
 
     @FXML
     lateinit var infoTextField: TextArea
@@ -71,7 +89,10 @@ class FactoryController {
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
     private var insideDateSlider = Slider()
-    private var scale = 15.0
+
+    private var previousSavePath: String? = null
+
+    private var scaleMain = 10.0
 
     @FXML
     fun initialize() {
@@ -127,10 +148,9 @@ class FactoryController {
             val selectedItem = listView.items[index]
             val tempFactory = factory.makeCopy()
             tempFactory.objects.remove(selectedItem)
-
             val insideEditButton = Button()
             insideEditButton.text = "Изменить"
-            val factoryCanvas = Canvas(factory.length * scale + 1, factory.width * scale + 1)
+            val factoryCanvas = Canvas(factory.length * scaleMain + 1, factory.width * scaleMain + 1)
             val shape = createShape(selectedItem)
             val stage = Stage()
             val group = Group(factoryCanvas, shape)
@@ -139,33 +159,48 @@ class FactoryController {
             textField.text = selectedItem.first.name
             val colorPicker = ColorPicker()
             colorPicker.value = selectedItem.first.color
+            val currentDateLabel = Label()
             val insideStartDatePicker = DatePicker(selectedItem.first.dateStart)
+            fun updateInsideSlider(){
+                insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
+                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
+            }
+            insideStartDatePicker.setOnAction {
+                insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
+                updateInsideSlider()
+            }
             val insideEndDatePicker = DatePicker(selectedItem.first.dateEnd)
-            val hBox = HBox(insideStartDatePicker, insideEndDatePicker)
+            insideEndDatePicker.setOnAction {
+                insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
+                updateInsideSlider()
+            }
+            val hBox = HBox(insideStartDatePicker, insideEndDatePicker, currentDateLabel)
             insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
             insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
-            insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
-            insideDateSlider.setOnMouseReleased {
-                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
+            updateInsideSlider()
+            insideDateSlider.setOnMouseDragged {
+                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
+                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
             }
             val vBox = VBox()
-            vBox.spacing = 5.0
+            vBox.spacing = 10.0
             vBox.alignment = Pos.CENTER
             vBox.children.addAll(textField, colorPicker, group, hBox, insideDateSlider, insideEditButton)
             val scene = Scene(vBox)
             stage.scene = scene
+            stage.isResizable = false
             stage.show()
-            drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()))
             shape.setOnMouseDragged { e ->
-                shape.layoutX = (e.sceneX.toInt() / (scale.toInt()*2)) * scale
-                shape.layoutY = (e.sceneY.toInt() / (scale.toInt()*2) )* scale
+                shape.layoutX = ((e.sceneX - factoryCanvas.layoutX - canvasBorderPane.padding.left) / scaleMain).toInt() * scaleMain
+                shape.layoutY = ((e.sceneY - factoryCanvas.layoutY - colorPicker.height - textField.height - canvasBorderPane.padding.top) / scaleMain).toInt() * scaleMain
                 val bounds = shape.boundsInParent
                 insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
             }
             insideEditButton.setOnAction {
                 val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / scale.toInt()
-                selectedItem.second.y = bounds.minY.toInt() / scale.toInt()
+                selectedItem.second.x = bounds.minX.toInt() / scaleMain.toInt()
+                selectedItem.second.y = bounds.minY.toInt() / scaleMain.toInt()
                 selectedItem.first.color = colorPicker.value
                 selectedItem.first.name = textField.text
                 selectedItem.first.dateStart = insideStartDatePicker.value
@@ -224,8 +259,8 @@ class FactoryController {
         initialize()
     }
 
-    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate){
-        val gc = canvas.getGraphicsContext2D()
+    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double){
+        val gc = canvas.graphicsContext2D
         gc.clearRect(0.0,0.0, canvas.width, canvas.height)
         var x = 0.5
         var y = 0.5
@@ -240,10 +275,10 @@ class FactoryController {
 
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate()
-                val dataY = y.toUserCoordinate()
-                gc.stroke = Color.web("#DDDDDD")
+                val dataX = x.toUserCoordinate(scale)
+                val dataY = y.toUserCoordinate(scale)
                 gc.lineWidth = 1.0
+                gc.stroke = Color.web("#DDDDDD")
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
                     gc.fillRect(x, y, scale, scale)
@@ -257,6 +292,22 @@ class FactoryController {
                     gc.fillRect(x, y, scale, scale)
                     gc.strokeRect(x, y, scale, scale)
                 }
+                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
+                    gc.lineWidth = 2.0
+                    gc.stroke = Color.RED
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
+                        gc.strokeLine(x, y, x + scale, y)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
+                        gc.strokeLine(x, y + scale, x + scale, y + scale)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
+                        gc.strokeLine(x, y, x, y + scale)
+                    }
+                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
+                        gc.strokeLine(x + scale, y, x + scale, y + scale)
+                    }
+                }
                 y += scale
             }
             y = 0.5
@@ -267,11 +318,11 @@ class FactoryController {
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.first.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * scale + 1,it.y * scale + 1,scale - 1,scale - 1))
+            shape = Shape.union(shape, Rectangle(it.x * scaleMain + 1, it.y * scaleMain + 1, scaleMain - 1, scaleMain - 1))
         }
         shape.fill = fo.first.color
-        shape.layoutX = fo.second.x * scale
-        shape.layoutY = fo.second.y * scale
+        shape.layoutX = fo.second.x * scaleMain
+        shape.layoutY = fo.second.y * scaleMain
         return shape
     }
 
@@ -285,17 +336,21 @@ class FactoryController {
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
             val pair = listView.items[index]
-            infoTextField.text = "Имя: ${pair.first.name}\n" +
-                    "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
-                    "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
+            infoTextField.text = objectInfoText(pair.first)
         }
     }
 
     private fun factoryMapSetup(){
-        canvas.width = factory.length * scale + 1
-        canvas.height = factory.width * scale + 1
+        scaleMain = min(min((canvasBorderPane.prefHeight-factoryTextField.prefHeight*2)/factory.width, canvasBorderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
+        canvas.width = factory.length * scaleMain + 1
+        canvas.height = factory.width * scaleMain + 1
+        factoryTextField.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
+                " Длина: ${factory.length}," +
+                " Ширина: ${factory.width}." +
+                " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
+                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
 
-        drawFactory(canvas, factory, currentDatePicker.value)
+        drawFactory(canvas, factory, currentDatePicker.value, scaleMain)
     }
 
     private fun textFieldSetup(){
@@ -315,7 +370,7 @@ class FactoryController {
         dateSlider.isVisible = isVisible
     }
 
-    private fun Double.toUserCoordinate() = (this / scale).toInt()
+    private fun Double.toUserCoordinate(scale: Double) = (this / scale).toInt()
     fun onErrorsButtonClick() {
         if (errorsButton.text == "Показать ошибки"){
             errorsButton.text = "Скрыть ошибки"
@@ -349,16 +404,15 @@ class FactoryController {
                             }
                         }
                     }
-
                 }
             }
             collisionsId.distinct().forEach{
                 val objectNumber = listView.items.indexOf(pair)
                 if (it == -1) {
-                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with FactoryLayout.\n"
+                    textField.text += "Объект $objectNumber. ${pair.first.name} наслаивается на границы цеха.\n"
                 } else {
                     val obj = listView.items.first{ obj -> obj.first.id == it}
-                    textField.text += "Object $objectNumber. ${pair.first.name} has collisions with ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
+                    textField.text += "Объект $objectNumber. ${pair.first.name} имеет коллизии с объектом ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
                 }
             }
         }
@@ -370,11 +424,11 @@ class FactoryController {
     }
 
     fun onMouseMovedInsideCanvas(e: MouseEvent) {
-        val x = ((e.sceneX - canvas.layoutX - leftAnchorPane.width) / scale).toInt()
-        val y = ((e.sceneY - canvas.layoutY - topHbox.height) / scale).toInt()
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scaleMain).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scaleMain).toInt()
         infoTextField.text = "x = $x \ny = $y\n"
         if (factory.excludedCoordinates.contains(Coordinate(x, y))){
-            infoTextField.text += "Excluded coordinate\n"
+            infoTextField.text += "Координата вне цеха\n"
         }else{
             if (textField.text == ""){
                 try {
@@ -383,18 +437,15 @@ class FactoryController {
                                 && it.first.dateEnd >= currentDatePicker.value
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
-                    infoTextField.text += "Имя: ${pair.first.name}\n" +
-                            "Начальная дата: ${pair.first.dateStart.toCustomString()}\n" +
-                            "Конечная дата: ${pair.first.dateEnd.toCustomString()}"
+                    infoTextField.text += objectInfoText(pair.first)
                 } catch (_: Exception){}
             }
         }
-
     }
 
     fun onMouseClickedInsideCanvas(e: MouseEvent) {
-        val x = ((e.sceneX - canvas.layoutX - leftAnchorPane.width) / scale).toInt()
-        val y = ((e.sceneY - canvas.layoutY - topHbox.height) / scale).toInt()
+        val x = ((e.sceneX - canvas.layoutX - leftVbox.width - 0.5).toInt() / scaleMain).toInt()
+        val y = ((e.sceneY - canvas.layoutY - topHbox.height - 0.5).toInt() / scaleMain).toInt()
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
@@ -426,15 +477,167 @@ class FactoryController {
         currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
         initialize()
     }
+    private fun FactoryObject.objectArea() = this.coordinates.size
 
     fun onScrollCanvas(scrollEvent: ScrollEvent) {
-        if(scrollEvent.deltaY < 0){
+        /*if(scrollEvent.deltaY < 0){
             if (scale != 150.0) scale++
         }
         else {
             if(scale != 5.0) scale --
         }
-        initialize()
+        initialize()*/
     }
 
+    private fun objectInfoText(fo: FactoryObject): String = "Имя: ${fo.name}\n" +
+            "Начальная дата:\n ${fo.dateStart.toCustomString()}\n" +
+            "Конечная дата:\n ${fo.dateEnd.toCustomString()}\n" +
+            "Площадь: ${fo.objectArea()} м²"
+
+    private fun allObjectsArea(date: LocalDate): Int{
+        var area = 0
+        factory.objects.forEach {
+            if (it.first.dateStart <= date && it.first.dateEnd >= date) area += it.first.objectArea()
+        }
+        return area
+    }
+
+    fun onPrintButtonClick() {
+        val printScale = (scaleMain / 1.5).toInt().toDouble()
+        val createStage = Stage()
+        val vBox = VBox()
+        val label1 = Label()
+        label1.font = Font.font(20.0)
+        label1.text = "Цех: ${data.getFileName().split(".")[0].split("\\").last()}." +
+                " Длина: ${factory.length}," +
+                " Ширина: ${factory.width}."
+        val label2 = Label()
+        label2.font = Font.font(20.0)
+        label2.text = " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
+                " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
+        val printCanvas = Canvas(factory.length * printScale + 1, factory.width * printScale + 1)
+        drawFactory(printCanvas, factory, currentDatePicker.value, printScale)
+        val printButton = Button()
+        printButton.text = "Сохранить"
+        printButton.setOnMouseClicked{
+            /*val job = PrinterJob.createPrinterJob()
+            job?.showPrintDialog(createStage)
+            job?.printPage(vBox)
+            job?.endJob()*/
+            saveAsPng(vBox, createStage)
+            createStage.close()
+        }
+        vBox.spacing = 10.0
+        vBox.alignment = Pos.CENTER
+        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+       /* val legendListView = ListView(currentDateObjects)
+        legendListView.setCellFactory {FactoryObjectCellFactory()}
+        val hBox = HBox()
+        hBox.children.addAll(printCanvas, legendListView)*/
+        val vBox2 = VBox()
+        vBox2.spacing = 10.0
+        vBox2.alignment = Pos.CENTER
+        //vBox.children.addAll(label1, label2, hBox)
+        vBox.children.addAll(label1, label2, printCanvas)
+        vBox2.children.addAll(vBox, printButton)
+        //HBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
+        VBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
+        //HBox.setMargin(legendListView, Insets(0.0,10.0,10.0,10.0))
+        VBox.setMargin(printButton, Insets(0.0,10.0,10.0,10.0))
+        val scene = Scene(vBox2)
+        createStage.title = "Сохранить изображение"
+        createStage.scene = scene
+        createStage.isResizable = false
+        createStage.show()
+    }
+
+    private fun saveAsPng(node: Node, stage: Window) = saveAsPng(node, stage, SnapshotParameters())
+
+    private fun saveAsPng(node: Node, stage: Window, ssp: SnapshotParameters?) {
+        val image: WritableImage = node.snapshot(ssp, null)
+        val fileChooser = FileChooser()
+        fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("Image", "*.png"))
+        val currentPath = if (previousSavePath != null)
+            previousSavePath!!
+        else
+            Paths.get(".").toAbsolutePath().normalize().toString()
+        fileChooser.initialDirectory = File(currentPath)
+        val file = fileChooser.showSaveDialog(stage)
+        previousSavePath = file.path.split("\\${file.name}")[0]
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file)
+        } catch (e: IOException) {
+            // TODO: handle exception here
+        }
+        createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
+        /*val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+        val legendListView = ListView(currentDateObjects)
+        legendListView.setCellFactory {FactoryObjectCellFactory()}
+        val vBox = VBox()
+        //vBox.prefWidth = 500.0
+        //vBox.prefHeight = 500.0
+        vBox.children.addAll(legendListView)
+        val scene = Scene(vBox)
+        val secondImage: WritableImage = vBox.snapshot(ssp, null)
+        val secondFile = File("$previousSavePath\\legend_of_${file.name}")
+        createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
+        try {
+            ImageIO.write(SwingFXUtils.fromFXImage(secondImage, null), "png", secondFile)
+        } catch (e: IOException) {
+            // TODO: handle exception here
+        }*/
+    }
+
+    private fun createSpreadsheet(file: File){
+        val workbook = XSSFWorkbook()
+        val spreadsheet: Sheet = workbook.createSheet("legend")
+        var row: Row = spreadsheet.createRow(0)
+        row.createCell(0).setCellValue("Цвет")
+        row.createCell(1).setCellValue("Имя")
+        row.createCell(2).setCellValue("Начальная дата")
+        row.createCell(3).setCellValue("Конечная дата")
+        row.createCell(4).setCellValue("Площадь")
+        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+        var index = 1
+
+        if (currentDateObjects.isNotEmpty()){
+            for (i in currentDateObjects){
+                val color = i.first.color
+                val red = (color.red * 255).toInt()
+                val green = (color.green * 255).toInt()
+                val blue = (color.blue * 255).toInt()
+                val rgb = byteArrayOf(red.toByte(), green.toByte(), blue.toByte())
+                val xssfColor = XSSFColor(rgb, null)
+                val style:XSSFCellStyle = workbook.createCellStyle()
+
+                style.setFillForegroundColor(xssfColor)
+                style.fillPattern = FillPatternType.SOLID_FOREGROUND
+
+                row = spreadsheet.createRow(index)
+                row.createCell(0).cellStyle = style
+                row.createCell(1).setCellValue(i.first.name)
+                row.createCell(2).setCellValue(i.first.dateStart.toCustomString())
+                row.createCell(3).setCellValue(i.first.dateEnd.toCustomString())
+                row.createCell(4).setCellValue(i.first.coordinates.size.toString())
+                index++
+            }
+        }
+        spreadsheet.autoSizeColumn(0)
+        spreadsheet.autoSizeColumn(1)
+        spreadsheet.autoSizeColumn(2)
+        spreadsheet.autoSizeColumn(3)
+        row = spreadsheet.createRow(index)
+        row.createCell(0).setCellValue("Цех: ${data.getFileName().split(".")[0].split("\\").last()}."
+                + " Дата: ${currentDatePicker.value.toCustomString()}"
+        )
+        val stream = FileOutputStream(file)
+        workbook.write(stream)
+        stream.close()
+    }
 }

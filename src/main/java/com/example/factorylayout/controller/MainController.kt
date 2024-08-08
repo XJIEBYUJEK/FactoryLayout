@@ -35,12 +35,13 @@ class MainController {
         val newStage = Stage()
         newStage.title = stage.title
         newStage.scene = scene
+        newStage.isResizable = false
         newStage.show()
         stage.close()
     }
 
     @FXML
-    fun openProject() {  //TODO add explorer
+    fun openProject() {
         val stage = this.openButton.scene.window as Stage
         val fileChooser = FileChooser()
         fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("json Files", "*.json"))
@@ -57,6 +58,7 @@ class MainController {
             val newStage = Stage()
             newStage.title = stage.title + " ${file.name}"
             newStage.scene = scene
+            newStage.isResizable = false
             newStage.show()
             stage.close()
         } catch (e: Exception){

@@ -14,13 +14,18 @@ import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
+import javafx.scene.layout.BorderPane
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import java.io.File
 import java.nio.file.Paths
+import kotlin.math.min
 
 class FactoryCreateController {
+
+    @FXML
+    lateinit var borderPane: BorderPane
 
     @FXML
     private lateinit var saveButton: Button
@@ -40,19 +45,21 @@ class FactoryCreateController {
     private var coordinateList: MutableList<Coordinate> = mutableListOf()
 
     private val data = SingletonData.getInstance()
-    private var scale = 15.0
+
+    private var scale = 10.0
 
     @FXML
     fun onCreateClick() {
         warningLabel.text = ""
-        val width = widthText.text.toDoubleOrNull()?.times(scale)
-        val length = lengthText.text.toDoubleOrNull()?.times(scale)
+        val width = widthText.text.toDoubleOrNull()
+        val length = lengthText.text.toDoubleOrNull()
         if (width != null && length != null && width > 0 && length > 0){
+            scale = min(min((borderPane.prefHeight-100)/width, borderPane.prefWidth/length).toInt().toDouble(), 50.0)
             saveButton.isDisable = false
-            canvas.width = length + 1
-            canvas.height = width + 1
-            onScrollCanvas(canvas)
-            val gc = canvas.getGraphicsContext2D()
+            canvas.width = length * scale + 1
+            canvas.height = width * scale + 1
+            //onScrollCanvas(canvas)
+            val gc = canvas.graphicsContext2D
             gc.clearRect(0.0,0.0, canvas.width, canvas.height)
             var x = 0.5
             var y = 0.5
@@ -109,7 +116,7 @@ class FactoryCreateController {
                 coordinateList.add(coordinate)
                 coordinateList = coordinateList.distinct().toMutableList()
             }
-            gc.fillRect(x + 1,y + 1,scale - 1,scale - 1)
+            gc.fillRect(x + 1, y + 1, scale - 1, scale - 1)
         }
     }
 
@@ -140,7 +147,7 @@ class FactoryCreateController {
         stage.show()
     }
 
-    private fun onScrollCanvas(canvas: Canvas) {
+    /*private fun onScrollCanvas(canvas: Canvas) {
         canvas.setOnScroll {
             if(it.deltaY < 0){
                 if (scale != 150.0) scale++
@@ -150,7 +157,7 @@ class FactoryCreateController {
             }
             onCreateClick()
         }
-    }
+    }*/
 
 
 }
