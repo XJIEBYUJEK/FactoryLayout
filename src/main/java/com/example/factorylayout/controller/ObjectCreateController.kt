@@ -1,6 +1,7 @@
 package com.example.factorylayout.controller
 
 import com.example.factorylayout.data.SingletonData
+import com.example.factorylayout.dateCheck
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
 import javafx.fxml.FXML
@@ -203,7 +204,7 @@ class ObjectCreateController {
         var y = 0.5
         val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
         factory.objects.forEach {
-            if (it.first.dateStart <= LocalDate.ofEpochDay(dateSlider.value.toLong()) && it.first.dateEnd >= LocalDate.ofEpochDay(dateSlider.value.toLong())){
+            if (dateCheck(it.first, LocalDate.ofEpochDay(dateSlider.value.toLong()))){
                 it.first.coordinates.forEach {coordinate ->
                     excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
                 }
@@ -220,7 +221,8 @@ class ObjectCreateController {
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
-                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
+                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) &&
+                                dateCheck(it.first, LocalDate.ofEpochDay(dateSlider.value.toLong()))
                     }
                     gc.fill = colorInfo.first.color
                     gc.fillRect(x, y, scale, scale)

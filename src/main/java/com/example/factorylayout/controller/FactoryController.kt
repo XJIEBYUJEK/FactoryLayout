@@ -2,6 +2,7 @@ package com.example.factorylayout.controller
 
 import com.example.factorylayout.FactoryApplication
 import com.example.factorylayout.data.SingletonData
+import com.example.factorylayout.dateCheck
 import com.example.factorylayout.factory.FactoryObjectCellFactory
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
@@ -266,7 +267,7 @@ class FactoryController {
         var y = 0.5
         val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
         factory.objects.forEach {
-            if (it.first.dateStart <= currentDate && it.first.dateEnd >= currentDate){
+            if (dateCheck(it.first, currentDate)){
                 it.first.coordinates.forEach {coordinate ->
                     excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
                 }
@@ -286,7 +287,8 @@ class FactoryController {
                 }
                 else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
                     val colorInfo = factory.objects.first{
-                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y))
+                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) &&
+                                dateCheck(it.first, currentDate)
                     }
                     gc.fill = colorInfo.first.color
                     gc.fillRect(x, y, scale, scale)
@@ -433,8 +435,7 @@ class FactoryController {
             if (textField.text == ""){
                 try {
                     val pair = factory.objects.first{
-                        it.first.dateStart <= currentDatePicker.value
-                                && it.first.dateEnd >= currentDatePicker.value
+                        dateCheck(it.first, currentDatePicker.value)
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
                     infoTextField.text += objectInfoText(pair.first)
@@ -449,8 +450,7 @@ class FactoryController {
         if (textField.text == ""){
             try {
                 val pair = factory.objects.first{
-                    it.first.dateStart <= currentDatePicker.value
-                            && it.first.dateEnd >= currentDatePicker.value
+                    dateCheck(it.first, currentDatePicker.value)
                             && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                 }
                 listView.selectionModel.select(listView.items.indexOf(pair))
@@ -497,7 +497,7 @@ class FactoryController {
     private fun allObjectsArea(date: LocalDate): Int{
         var area = 0
         factory.objects.forEach {
-            if (it.first.dateStart <= date && it.first.dateEnd >= date) area += it.first.objectArea()
+            if (dateCheck(it.first, date)) area += it.first.objectArea()
         }
         return area
     }
@@ -520,31 +520,17 @@ class FactoryController {
         val printButton = Button()
         printButton.text = "Сохранить"
         printButton.setOnMouseClicked{
-            /*val job = PrinterJob.createPrinterJob()
-            job?.showPrintDialog(createStage)
-            job?.printPage(vBox)
-            job?.endJob()*/
             saveAsPng(vBox, createStage)
             createStage.close()
         }
         vBox.spacing = 10.0
         vBox.alignment = Pos.CENTER
-        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
-            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
-        })
-       /* val legendListView = ListView(currentDateObjects)
-        legendListView.setCellFactory {FactoryObjectCellFactory()}
-        val hBox = HBox()
-        hBox.children.addAll(printCanvas, legendListView)*/
         val vBox2 = VBox()
         vBox2.spacing = 10.0
         vBox2.alignment = Pos.CENTER
-        //vBox.children.addAll(label1, label2, hBox)
         vBox.children.addAll(label1, label2, printCanvas)
         vBox2.children.addAll(vBox, printButton)
-        //HBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
         VBox.setMargin(printCanvas, Insets(0.0,10.0,10.0,10.0))
-        //HBox.setMargin(legendListView, Insets(0.0,10.0,10.0,10.0))
         VBox.setMargin(printButton, Insets(0.0,10.0,10.0,10.0))
         val scene = Scene(vBox2)
         createStage.title = "Сохранить изображение"
@@ -572,24 +558,6 @@ class FactoryController {
             // TODO: handle exception here
         }
         createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
-        /*val currentDateObjects = FXCollections.observableList(factory.objects.filter {
-            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
-        })
-        val legendListView = ListView(currentDateObjects)
-        legendListView.setCellFactory {FactoryObjectCellFactory()}
-        val vBox = VBox()
-        //vBox.prefWidth = 500.0
-        //vBox.prefHeight = 500.0
-        vBox.children.addAll(legendListView)
-        val scene = Scene(vBox)
-        val secondImage: WritableImage = vBox.snapshot(ssp, null)
-        val secondFile = File("$previousSavePath\\legend_of_${file.name}")
-        createSpreadsheet(File("$previousSavePath\\legend_of_${file.name}.xlsx"))
-        try {
-            ImageIO.write(SwingFXUtils.fromFXImage(secondImage, null), "png", secondFile)
-        } catch (e: IOException) {
-            // TODO: handle exception here
-        }*/
     }
 
     private fun createSpreadsheet(file: File){
