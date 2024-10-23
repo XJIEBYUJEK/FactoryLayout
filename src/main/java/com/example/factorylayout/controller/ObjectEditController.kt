@@ -17,9 +17,13 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
+import javafx.scene.transform.Rotate
 import javafx.stage.Stage
+import java.lang.Math.toRadians
 import java.time.LocalDate
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
 
 class ObjectEditController {
 
@@ -84,14 +88,32 @@ class ObjectEditController {
         tempFactory.objects.remove(selectedObjectData)
         drawFactory(canvas, tempFactory, currentDatePicker.value, scale)
         if(groupCanvas.children.size == 1){
-            shape = createShape(selectedObjectData)
-            shape.setOnMouseDragged { e ->
-                shape.layoutX = (e.sceneX - getCanvasPadding(false)).scaleRefactor(scale)
-                shape.layoutY = (e.sceneY - getCanvasPadding(true)).scaleRefactor(scale)
-                isItOkToSave()
-            }
-            groupCanvas.children.add(shape)
+            shapeSetup()
         }
+    }
+
+    private fun shapeSetup(){
+        shape = createShape(selectedObjectData)
+        shape.setOnMouseDragged { e ->
+            shape.layoutX = (e.sceneX - getCanvasPadding(false)).scaleRefactor(scale)
+            shape.layoutY = (e.sceneY - getCanvasPadding(true)).scaleRefactor(scale)
+            isItOkToSave()
+        }
+        val rotate = Rotate()
+        shape.transforms.add(rotate)
+        shape.setOnScroll {
+            val delta = it.deltaY
+            if (delta < 0){
+                rotate.angle -= 90.0
+                rotateCoordinates(selectedObject.coordinates, false)
+            }
+            else{
+                rotate.angle += 90.0
+                rotateCoordinates(selectedObject.coordinates, true)
+            }
+
+        }
+        groupCanvas.children.add(shape)
     }
 
     private fun getCanvasPadding(isVertical: Boolean): Double{
@@ -231,5 +253,23 @@ class ObjectEditController {
     }
     private fun updateSlider(isVisible: Boolean) = updateSlider(isVisible, dateSlider, startDatePicker, endDatePicker, currentDatePicker)
 
+    private fun rotateCoordinates(coordinates: List<Coordinate>, isPositive: Boolean){
+        val sinAngle = if (isPositive) 1 else -1 //sin(pi/2) or (-pi/2)
+
+        coordinates.forEach { coordinate ->
+            // cos is always 0
+            val newX = - coordinate.y * sinAngle
+            val newY = coordinate.x * sinAngle
+            coordinate.x = newX
+            coordinate.y = newY
+        }
+        val minY = coordinates.minOf { it.y }
+        val minX = coordinates.minOf { it.x }
+        coordinates.forEach {
+            it.x -= minX
+            it.y -= minY
+        }
+        isItOkToSave()
+    }
 }
 
