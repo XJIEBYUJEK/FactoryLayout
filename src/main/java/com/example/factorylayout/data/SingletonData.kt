@@ -18,31 +18,30 @@ class SingletonData private constructor(){
     private lateinit var factory: Factory
     private lateinit var factoryObject: FactoryObject
     private var fileName = ""
+    private var objectId = -1
 
-    fun getFactoryLayout(): Factory {
-        return factory
-    }
+    fun getFactoryLayout() = factory
 
     fun setFactoryLayout(f: Factory){
         this.factory = f
     }
 
-    fun getFactoryObject(): FactoryObject{
-        return factoryObject
-    }
+    fun getFactoryObject() = factoryObject
 
     fun setFactoryObject(fo: FactoryObject){
         this.factoryObject = fo
     }
 
-    fun getFileName(): String {
-        return fileName
-    }
+    fun getFileName() = fileName
 
     fun setFileName(name: String){
         this.fileName = name
     }
 
+    fun getObjectId() = objectId
 
+    fun setObjectId(id: Int){
+        this.objectId = id
+    }
 
 }

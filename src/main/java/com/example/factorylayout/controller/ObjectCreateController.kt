@@ -4,6 +4,8 @@ import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.dateCheck
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
+import com.example.factorylayout.scaleRefactor
+import com.example.factorylayout.toUserCoordinate
 import javafx.fxml.FXML
 import javafx.geometry.Pos
 import javafx.scene.Group
@@ -70,8 +72,8 @@ class ObjectCreateController {
         val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate()
-                val dataY = y.toUserCoordinate()
+                val dataX = x.toUserCoordinate(scale)
+                val dataY = y.toUserCoordinate(scale)
                 gc.stroke = Color.web("#DDDDDD")
                 gc.lineWidth = 1.0
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
@@ -183,8 +185,8 @@ class ObjectCreateController {
         createExtraStage()
         drawFactory(factoryCanvas)
         shape.setOnMouseDragged { e ->
-            shape.layoutX = ((e.sceneX - factoryCanvas.layoutX) / scale).toInt() * scale
-            shape.layoutY = ((e.sceneY - factoryCanvas.layoutY) / scale).toInt() * scale
+            shape.layoutX = (e.sceneX - factoryCanvas.layoutX).scaleRefactor(scale)
+            shape.layoutY = (e.sceneY - factoryCanvas.layoutY).scaleRefactor(scale)
             val bounds = shape.boundsInParent
             insideAddButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
         }
@@ -213,8 +215,8 @@ class ObjectCreateController {
 
         while (x < canvas.width - 0.5){
             while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate()
-                val dataY = y.toUserCoordinate()
+                val dataX = x.toUserCoordinate(scale)
+                val dataY = y.toUserCoordinate(scale)
                 if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
                     gc.fill = Color.WHITE
                     gc.fillRect(x, y, scale, scale)
@@ -257,7 +259,6 @@ class ObjectCreateController {
         shape.fill = fo.color
         return shape
     }
-    private fun Double.toUserCoordinate() = (this / scale).toInt()
     @FXML
     fun onCancelButtonClick() {
         val stage = this.canvas.scene.window as Stage

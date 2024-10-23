@@ -4,6 +4,7 @@ import com.example.factorylayout.FactoryApplication
 import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
+import com.example.factorylayout.toUserCoordinate
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
@@ -65,8 +66,8 @@ class FactoryCreateController {
             var y = 0.5
             while (x < canvas.width - 0.5){
                 while (y < canvas.height - 0.5){
-                    val dataX = x.toUserCoordinate()
-                    val dataY = y.toUserCoordinate()
+                    val dataX = x.toUserCoordinate(scale)
+                    val dataY = y.toUserCoordinate(scale)
                     gc.stroke = Color.web("#DDDDDD")
                     gc.lineWidth = 1.0
                     gc.fill = if (coordinateList.contains(Coordinate(dataX,dataY))) Color.RED else Color.WHITE
@@ -83,7 +84,6 @@ class FactoryCreateController {
             warningLabel.text = "error"
         }
     }
-    private fun Double.toUserCoordinate() = (this / scale).toInt()
     fun onMouseDragged(mouseEvent: MouseEvent) {
         when (mouseEvent.button){
             MouseButton.PRIMARY -> colorPixels(mouseEvent, false)

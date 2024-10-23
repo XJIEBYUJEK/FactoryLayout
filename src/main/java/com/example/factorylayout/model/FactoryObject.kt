@@ -21,7 +21,9 @@ data class FactoryObject(
     @Serializable (with = DateAsStringSerializer::class)
     var dateStart: LocalDate,
     @Serializable (with = DateAsStringSerializer::class)
-    var dateEnd: LocalDate
+    var dateEnd: LocalDate,
+    val parentObject: Int? = null,
+    val childObjects: MutableList<Int> = mutableListOf()
 )
 
 object ColorAsStringSerializer : KSerializer<Color> {

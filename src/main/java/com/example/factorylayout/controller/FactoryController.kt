@@ -1,11 +1,9 @@
 package com.example.factorylayout.controller
 
-import com.example.factorylayout.FactoryApplication
+import com.example.factorylayout.*
 import com.example.factorylayout.data.SingletonData
-import com.example.factorylayout.dateCheck
 import com.example.factorylayout.factory.FactoryObjectCellFactory
 import com.example.factorylayout.model.Coordinate
-import com.example.factorylayout.model.Factory
 import com.example.factorylayout.model.FactoryObject
 import javafx.collections.FXCollections
 import javafx.embed.swing.SwingFXUtils
@@ -22,14 +20,12 @@ import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
-import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
 import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import javafx.stage.Window
-import org.apache.poi.hssf.usermodel.HSSFWorkbook
 import org.apache.poi.ss.usermodel.*
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
@@ -143,81 +139,28 @@ class FactoryController {
         }
     }
 
-    fun onEditButtonClick() {
+    fun onEditButtonClick(){
         val index = listView.selectionModel.selectedIndex
         if(index > -1){
-            val selectedItem = listView.items[index]
-            val tempFactory = factory.makeCopy()
-            tempFactory.objects.remove(selectedItem)
-            val insideEditButton = Button()
-            insideEditButton.text = "Изменить"
-            val factoryCanvas = Canvas(factory.length * scaleMain + 1, factory.width * scaleMain + 1)
-            val shape = createShape(selectedItem)
+            val selectedItemId = listView.items[index].first.id
+            data.setObjectId(selectedItemId)
             val stage = Stage()
-            val group = Group(factoryCanvas, shape)
-            stage.title = "Изменение объекта"
-            val textField = TextField()
-            textField.text = selectedItem.first.name
-            val colorPicker = ColorPicker()
-            colorPicker.value = selectedItem.first.color
-            val currentDateLabel = Label()
-            val insideStartDatePicker = DatePicker(selectedItem.first.dateStart)
-            fun updateInsideSlider(){
-                insideDateSlider.value = insideStartDatePicker.value.toEpochDay().toDouble()
-                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
-                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
-            }
-            insideStartDatePicker.setOnAction {
-                insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
-                updateInsideSlider()
-            }
-            val insideEndDatePicker = DatePicker(selectedItem.first.dateEnd)
-            insideEndDatePicker.setOnAction {
-                insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
-                updateInsideSlider()
-            }
-            val hBox = HBox(insideStartDatePicker, insideEndDatePicker, currentDateLabel)
-            insideDateSlider.min = insideStartDatePicker.value.toEpochDay().toDouble()
-            insideDateSlider.max = insideEndDatePicker.value.toEpochDay().toDouble()
-            updateInsideSlider()
-            insideDateSlider.setOnMouseDragged {
-                currentDateLabel.text = LocalDate.ofEpochDay(insideDateSlider.value.toLong()).toCustomString()
-                drawFactory(factoryCanvas, tempFactory, LocalDate.ofEpochDay(insideDateSlider.value.toLong()), scaleMain)
-            }
-            val vBox = VBox()
-            vBox.spacing = 10.0
-            vBox.alignment = Pos.CENTER
-            vBox.children.addAll(textField, colorPicker, group, hBox, insideDateSlider, insideEditButton)
-            val scene = Scene(vBox)
+            stage.title = "Редактирование объекта"
+            val loader = FXMLLoader(FactoryApplication::class.java.getResource("ObjectEditView.fxml"))
+            val root = loader.load<Any>() as Parent
+            val scene = Scene(root)
             stage.scene = scene
-            stage.isResizable = false
             stage.show()
-            shape.setOnMouseDragged { e ->
-                shape.layoutX = ((e.sceneX - factoryCanvas.layoutX - canvasBorderPane.padding.left) / scaleMain).toInt() * scaleMain
-                shape.layoutY = ((e.sceneY - factoryCanvas.layoutY - colorPicker.height - textField.height - canvasBorderPane.padding.top) / scaleMain).toInt() * scaleMain
-                val bounds = shape.boundsInParent
-                insideEditButton.isDisable = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
-            }
-            insideEditButton.setOnAction {
-                val bounds = shape.boundsInParent
-                selectedItem.second.x = bounds.minX.toInt() / scaleMain.toInt()
-                selectedItem.second.y = bounds.minY.toInt() / scaleMain.toInt()
-                selectedItem.first.color = colorPicker.value
-                selectedItem.first.name = textField.text
-                selectedItem.first.dateStart = insideStartDatePicker.value
-                selectedItem.first.dateEnd = insideEndDatePicker.value
-                stage.close()
+            stage.setOnHiding {
+                this.factory = data.getFactoryLayout()
                 initialize()
             }
         }
+
     }
 
     fun onCurrentDatePickerAction() {
-        if(startDatePicker.value != null && startDatePicker.value > currentDatePicker.value)
-            startDatePicker.value = currentDatePicker.value
-        if(endDatePicker.value != null && endDatePicker.value < currentDatePicker.value)
-            endDatePicker.value = currentDatePicker.value
-        if (startDatePicker.value != null && endDatePicker.value != null) updateSlider(true)
+        currentDatePickerSettings(dateSlider, startDatePicker, endDatePicker, currentDatePicker)
         initialize()
     }
 
@@ -256,65 +199,8 @@ class FactoryController {
     }
 
     fun onDragSlider() {
-        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
+        updateDatePickerFromSlider(dateSlider, currentDatePicker)
         initialize()
-    }
-
-    private fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double){
-        val gc = canvas.graphicsContext2D
-        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
-        var x = 0.5
-        var y = 0.5
-        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-        factory.objects.forEach {
-            if (dateCheck(it.first, currentDate)){
-                it.first.coordinates.forEach {coordinate ->
-                    excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
-                }
-            }
-        }
-
-        while (x < canvas.width - 0.5){
-            while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate(scale)
-                val dataY = y.toUserCoordinate(scale)
-                gc.lineWidth = 1.0
-                gc.stroke = Color.web("#DDDDDD")
-                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
-                    gc.fill = Color.WHITE
-                    gc.fillRect(x, y, scale, scale)
-                    gc.strokeRect(x, y, scale, scale)
-                }
-                else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    val colorInfo = factory.objects.first{
-                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) &&
-                                dateCheck(it.first, currentDate)
-                    }
-                    gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, scale, scale)
-                    gc.strokeRect(x, y, scale, scale)
-                }
-                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    gc.lineWidth = 2.0
-                    gc.stroke = Color.RED
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
-                        gc.strokeLine(x, y, x + scale, y)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
-                        gc.strokeLine(x, y + scale, x + scale, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
-                        gc.strokeLine(x, y, x, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
-                        gc.strokeLine(x + scale, y, x + scale, y + scale)
-                    }
-                }
-                y += scale
-            }
-            y = 0.5
-            x += scale
-        }
     }
 
     private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
@@ -363,16 +249,6 @@ class FactoryController {
         errorsLabel.isVisible = false
     }
 
-    private fun updateSlider(isVisible: Boolean){
-        if (isVisible){
-            dateSlider.min = startDatePicker.value.toEpochDay().toDouble()
-            dateSlider.max = endDatePicker.value.toEpochDay().toDouble()
-            dateSlider.value = currentDatePicker.value.toEpochDay().toDouble()
-        }
-        dateSlider.isVisible = isVisible
-    }
-
-    private fun Double.toUserCoordinate(scale: Double) = (this / scale).toInt()
     fun onErrorsButtonClick() {
         if (errorsButton.text == "Показать ошибки"){
             errorsButton.text = "Скрыть ошибки"
@@ -474,7 +350,7 @@ class FactoryController {
     }
 
     fun onReleasedSlider() {
-        currentDatePicker.value = LocalDate.ofEpochDay(dateSlider.value.toLong())
+        updateDatePickerFromSlider(dateSlider, currentDatePicker)
         initialize()
     }
     private fun FactoryObject.objectArea() = this.coordinates.size
@@ -608,4 +484,6 @@ class FactoryController {
         workbook.write(stream)
         stream.close()
     }
+
+    private fun updateSlider(isVisible: Boolean) = updateSlider(isVisible, dateSlider, startDatePicker, endDatePicker, currentDatePicker)
 }

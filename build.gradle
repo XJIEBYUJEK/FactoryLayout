@@ -42,7 +42,7 @@ dependencies {
   testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
   implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
-  implementation group: 'org.openjfx', name: 'javafx-swing', version: '17.0.2'
+  implementation group: 'org.openjfx', name: 'javafx-swing', version: '22.0.1'
   implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '4.1.2'
 }
 
@@ -56,11 +56,8 @@ jlink {
     name = 'FactoryLayout'
   }
   mergedModule {
-    requires 'javafx.graphics';
     requires 'java.xml';
     requires 'java.desktop';
-    requires 'javafx.base';
-    requires 'javafx.controls';
   }
 }
 
