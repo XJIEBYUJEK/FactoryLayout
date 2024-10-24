@@ -2,6 +2,7 @@ package com.example.factorylayout.controller
 
 import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.dateCheck
+import com.example.factorylayout.drawFactory
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.scaleRefactor
@@ -65,43 +66,7 @@ class ObjectCreateController {
         scale = min(min((borderPane.prefHeight-100)/factory.width, borderPane.prefWidth/factory.length).toInt().toDouble(), 50.0)
         canvas.width = factory.length * scale + 1
         canvas.height = factory.width * scale + 1
-        val gc = canvas.graphicsContext2D
-        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
-        var x = 0.5
-        var y = 0.5
-        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-        while (x < canvas.width - 0.5){
-            while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate(scale)
-                val dataY = y.toUserCoordinate(scale)
-                gc.stroke = Color.web("#DDDDDD")
-                gc.lineWidth = 1.0
-                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
-                    gc.fill = Color.WHITE
-                    gc.fillRect(x, y, scale, scale)
-                    gc.strokeRect(x, y, scale, scale)
-                }
-                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    gc.lineWidth = 2.0
-                    gc.stroke = Color.RED
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
-                        gc.strokeLine(x, y, x + scale, y)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
-                        gc.strokeLine(x, y + scale, x + scale, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
-                        gc.strokeLine(x, y, x, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
-                        gc.strokeLine(x + scale, y, x + scale, y + scale)
-                    }
-                }
-                y += scale
-            }
-            y = 0.5
-            x += scale
-        }
+        drawFactory(canvas, factory, LocalDate.now(), scale, true)
     }
 
     fun onMouseDragged(mouseEvent: MouseEvent) {
@@ -167,7 +132,7 @@ class ObjectCreateController {
         dateSlider.max = endDatePicker.value.toEpochDay().toDouble()
         dateSlider.value = startDatePicker.value.toEpochDay().toDouble()
         dateSlider.setOnMouseDragged {
-            drawFactory(factoryCanvas)
+            drawFactory(factoryCanvas, factory, LocalDate.ofEpochDay(dateSlider.value.toLong()), scale)
         }
         val createStage = this.canvas.scene.window as Stage
         fun createExtraStage(){
@@ -183,7 +148,7 @@ class ObjectCreateController {
             createStage.show()
         }
         createExtraStage()
-        drawFactory(factoryCanvas)
+        drawFactory(factoryCanvas, factory, LocalDate.ofEpochDay(dateSlider.value.toLong()), scale)
         shape.setOnMouseDragged { e ->
             shape.layoutX = (e.sceneX - factoryCanvas.layoutX).scaleRefactor(scale)
             shape.layoutY = (e.sceneY - factoryCanvas.layoutY).scaleRefactor(scale)
@@ -199,58 +164,6 @@ class ObjectCreateController {
         }
     }
 
-    private fun drawFactory(canvas: Canvas){
-        val gc = canvas.graphicsContext2D
-        gc.clearRect(0.0,0.0, canvas.width, canvas.height)
-        var x = 0.5
-        var y = 0.5
-        val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-        factory.objects.forEach {
-            if (dateCheck(it.first, LocalDate.ofEpochDay(dateSlider.value.toLong()))){
-                it.first.coordinates.forEach {coordinate ->
-                    excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
-                }
-            }
-        }
-
-        while (x < canvas.width - 0.5){
-            while (y < canvas.height - 0.5){
-                val dataX = x.toUserCoordinate(scale)
-                val dataY = y.toUserCoordinate(scale)
-                if (!excludedCoordinates.contains(Coordinate(dataX, dataY))){
-                    gc.fill = Color.WHITE
-                    gc.fillRect(x, y, scale, scale)
-                }
-                else if(!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    val colorInfo = factory.objects.first{
-                        it.first.coordinates.contains(Coordinate(dataX-it.second.x, dataY-it.second.y)) &&
-                                dateCheck(it.first, LocalDate.ofEpochDay(dateSlider.value.toLong()))
-                    }
-                    gc.fill = colorInfo.first.color
-                    gc.fillRect(x, y, scale, scale)
-                }
-                if (!factory.excludedCoordinates.contains(Coordinate(dataX,dataY))){
-                    gc.lineWidth = 2.0
-                    gc.stroke = Color.RED
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY - 1)) || dataY == 0){
-                        gc.strokeLine(x, y, x + scale, y)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX,dataY + 1)) || dataY == factory.width - 1){
-                        gc.strokeLine(x, y + scale, x + scale, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX - 1, dataY)) || dataX == 0){
-                        gc.strokeLine(x, y, x, y + scale)
-                    }
-                    if (factory.excludedCoordinates.contains(Coordinate(dataX + 1, dataY)) || dataX == factory.length - 1){
-                        gc.strokeLine(x + scale, y, x + scale, y + scale)
-                    }
-                }
-                y += scale
-            }
-            y = 0.5
-            x += scale
-        }
-    }
     private fun createShape(fo: FactoryObject): Shape{
         var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
         fo.coordinates.forEach {

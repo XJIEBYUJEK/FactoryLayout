@@ -6,25 +6,29 @@ import com.example.factorylayout.model.FactoryObject
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.DatePicker
 import javafx.scene.control.Slider
+import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.transform.Scale
 import java.time.LocalDate
 
 fun dateCheck(fo: FactoryObject, date: LocalDate) = fo.dateStart <= date && fo.dateEnd >= date
 
-fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double){
+fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double, withoutObjects: Boolean = false){
     val gc = canvas.graphicsContext2D
     gc.clearRect(0.0,0.0, canvas.width, canvas.height)
     var x = 0.5
     var y = 0.5
     val excludedCoordinates =  factory.excludedCoordinates.toMutableList()
-    factory.objects.forEach {
-        if (dateCheck(it.first, currentDate)){
-            it.first.coordinates.forEach {coordinate ->
-                excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
+    if(!withoutObjects){
+        factory.objects.forEach {
+            if (dateCheck(it.first, currentDate)){
+                it.first.coordinates.forEach {coordinate ->
+                    excludedCoordinates.add(Coordinate(coordinate.x + it.second.x, coordinate.y + it.second.y))
+                }
             }
         }
     }
+
 
     while (x < canvas.width - 0.5){
         while (y < canvas.height - 0.5){
@@ -101,3 +105,8 @@ fun updateDatePickerFromSlider(slider: Slider, currentDatePicker: DatePicker){
 }
 
 fun Double.scaleRefactor(scale: Double) = (this/scale).toInt() * scale
+
+fun LocalDate.toCustomString() =
+    if (this.dayOfMonth < 10) {"0${this.dayOfMonth}."} else {"${this.dayOfMonth}."} +
+            if (this.monthValue < 10) {"0${this.monthValue}."} else {"${this.monthValue}."} +
+            "${this.year}"

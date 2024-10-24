@@ -36,6 +36,7 @@ import java.io.IOException
 import java.nio.file.Paths
 import java.time.LocalDate
 import javax.imageio.ImageIO
+import kotlin.math.max
 import kotlin.math.min
 
 
@@ -85,7 +86,6 @@ class FactoryController {
 
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
-    private var insideDateSlider = Slider()
 
     private var previousSavePath: String? = null
 
@@ -203,23 +203,12 @@ class FactoryController {
         initialize()
     }
 
-    private fun createShape(fo: Pair<FactoryObject,Coordinate>): Shape {
-        var shape = Rectangle(0.0,0.0,0.0,0.0) as Shape
-        fo.first.coordinates.forEach {
-            shape = Shape.union(shape, Rectangle(it.x * scaleMain + 1, it.y * scaleMain + 1, scaleMain - 1, scaleMain - 1))
-        }
-        shape.fill = fo.first.color
-        shape.layoutX = fo.second.x * scaleMain
-        shape.layoutY = fo.second.y * scaleMain
-        return shape
-    }
-
     private fun datePickersSetup(){
         if (currentDatePicker.value == null) currentDatePicker.value = LocalDate.now()
     }
 
     private fun listObjectsSetup(){
-        listView.items = FXCollections.observableList(factory.objects)
+        listView.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null })
         listView.setCellFactory { FactoryObjectCellFactory() }
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
@@ -314,7 +303,12 @@ class FactoryController {
                         dateCheck(it.first, currentDatePicker.value)
                                 && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                     }
-                    infoTextField.text += objectInfoText(pair.first)
+                    infoTextField.text += if (pair.first.parentObject == null)
+                        objectInfoText(pair.first)
+                    else
+                        objectInfoText(factory.objects.first {
+                            it.first.id == pair.first.parentObject
+                        }.first)
                 } catch (_: Exception){}
             }
         }
@@ -329,15 +323,17 @@ class FactoryController {
                     dateCheck(it.first, currentDatePicker.value)
                             && it.first.coordinates.contains(Coordinate(x - it.second.x, y - it.second.y))
                 }
-                listView.selectionModel.select(listView.items.indexOf(pair))
+                if (pair.first.parentObject == null){
+                    listView.selectionModel.select(listView.items.indexOf(pair))
+                } else {
+                    listView.selectionModel.select(listView.items.indexOf(factory.objects.first {
+                        it.first.id == pair.first.parentObject
+                    }))
+                }
+
             } catch (_: Exception){}
         }
     }
-
-    private fun LocalDate.toCustomString() =
-        if (this.dayOfMonth < 10) {"0${this.dayOfMonth}."} else {"${this.dayOfMonth}."} +
-        if (this.monthValue < 10) {"0${this.monthValue}."} else {"${this.monthValue}."} +
-                "${this.year}"
 
     fun onSaveAsButtonClicked() {
         val stage = this.canvas.scene.window as Stage
@@ -355,6 +351,41 @@ class FactoryController {
     }
     private fun FactoryObject.objectArea() = this.coordinates.size
 
+    private fun areaInfoText(fo: FactoryObject): String{
+        return if(fo.childObjects.isNotEmpty()){
+            var minArea = fo.objectArea()
+            var maxArea = fo.objectArea()
+            fo.childObjects.forEach { id ->
+                val tempArea = factory.objects.first { it.first.id == id }.first.objectArea()
+                minArea = min(minArea, tempArea)
+                maxArea = max(maxArea, tempArea)
+            }
+            if (minArea == maxArea){
+                "${fo.objectArea()}"
+            } else {
+                "от $minArea до $maxArea"
+            }
+        } else "${fo.objectArea()}"
+    }
+
+    private fun dateInfo(fo: FactoryObject, startDate: Boolean): LocalDate{
+        return if(fo.childObjects.isNotEmpty()){
+            var minDate = fo.dateStart
+            var maxDate = fo.dateEnd
+            fo.childObjects.forEach { id ->
+                val childObject = factory.objects.first { it.first.id == id }.first
+                if (minDate > childObject.dateStart) minDate = childObject.dateStart
+                if (maxDate < childObject.dateEnd) maxDate = childObject.dateEnd
+            }
+            if(startDate) minDate
+            else maxDate
+        }
+        else {
+            if(startDate) fo.dateStart
+            else fo.dateEnd
+        }
+    }
+
     fun onScrollCanvas(scrollEvent: ScrollEvent) {
         /*if(scrollEvent.deltaY < 0){
             if (scale != 150.0) scale++
@@ -366,9 +397,9 @@ class FactoryController {
     }
 
     private fun objectInfoText(fo: FactoryObject): String = "Имя: ${fo.name}\n" +
-            "Начальная дата:\n ${fo.dateStart.toCustomString()}\n" +
-            "Конечная дата:\n ${fo.dateEnd.toCustomString()}\n" +
-            "Площадь: ${fo.objectArea()} м²"
+            "Начальная дата:\n ${dateInfo(fo, true).toCustomString()}\n" +
+            "Конечная дата:\n ${dateInfo(fo, false).toCustomString()}\n" +
+            "Площадь: ${areaInfoText(fo)} м²"
 
     private fun allObjectsArea(date: LocalDate): Int{
         var area = 0
@@ -466,8 +497,8 @@ class FactoryController {
                 row = spreadsheet.createRow(index)
                 row.createCell(0).cellStyle = style
                 row.createCell(1).setCellValue(i.first.name)
-                row.createCell(2).setCellValue(i.first.dateStart.toCustomString())
-                row.createCell(3).setCellValue(i.first.dateEnd.toCustomString())
+                row.createCell(2).setCellValue(dateInfo(i.first, true).toCustomString())
+                row.createCell(3).setCellValue(dateInfo(i.first, false).toCustomString())
                 row.createCell(4).setCellValue(i.first.coordinates.size.toString())
                 index++
             }

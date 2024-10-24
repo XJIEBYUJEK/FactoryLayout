@@ -4,17 +4,27 @@ import com.example.factorylayout.*
 import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
+import javafx.collections.FXCollections
 import javafx.event.ActionEvent
 import javafx.fxml.FXML
+import javafx.fxml.FXMLLoader
+import javafx.geometry.Pos
 import javafx.scene.Group
+import javafx.scene.Parent
+import javafx.scene.Scene
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.Button
+import javafx.scene.control.ChoiceBox
 import javafx.scene.control.ColorPicker
 import javafx.scene.control.DatePicker
+import javafx.scene.control.Label
 import javafx.scene.control.Slider
 import javafx.scene.control.TextField
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
 import javafx.scene.transform.Rotate
@@ -26,6 +36,9 @@ import kotlin.math.min
 import kotlin.math.sin
 
 class ObjectEditController {
+
+    @FXML
+    lateinit var editSizeButton: Button
 
     @FXML
     private lateinit var borderPane: BorderPane
@@ -60,20 +73,186 @@ class ObjectEditController {
     private val data = SingletonData.getInstance()
     private var factory = data.getFactoryLayout()
     private var scale = 10.0
-    private val selectedObjectId = data.getObjectId()
-    private val selectedObjectData = factory.objects.first{
+    private var selectedObjectId = data.getObjectId()
+    private var selectedObjectData = factory.objects.first{
         it.first.id == selectedObjectId
     }
-    private val selectedObject = selectedObjectData.first
-    private val selectedObjectCoordinate = selectedObjectData.second
+    private var selectedObject = selectedObjectData.first
+    private var selectedObjectCoordinate = selectedObjectData.second
     private lateinit var shape: Shape
+    private var flag: Boolean = true
+    private var coordinateList = selectedObject.coordinates.map {
+        Coordinate(it.x + selectedObjectCoordinate.x, it.y + selectedObjectCoordinate.y)
+    }.toMutableList()
 
     @FXML
     fun initialize() {
-        datePickersSetup()
-        canvasSetup()
-        upperMenuSetup()
-        isItOkToSave()
+        if(selectedObject.childObjects.isNotEmpty() && flag){
+            dialogOptionSetup()
+        } else {
+            datePickersSetup()
+            canvasSetup()
+            upperMenuSetup()
+            isItOkToSave()
+            if (selectedObject.parentObject != null && flag){
+                editSizeButton.isDisable = true
+            }
+        }
+    }
+
+    private fun dialogOptionSetup(){
+        flag = false
+        val listOfDates = listOf("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}") +
+                selectedObject.childObjects.map { id ->
+                    val child = factory.objects.first { it.first.id == id }.first
+                    "${child.dateStart.toCustomString()} - ${child.dateEnd.toCustomString()}"
+                }
+        val label = Label("Выберите редактируемый\n промежуток")
+        val choiceBox = ChoiceBox(FXCollections.observableList(listOfDates))
+        val nextButton = Button("Далее")
+        choiceBox.setOnAction {
+            nextButton.isDisable = choiceBox.value == null
+        }
+        nextButton.isDisable = true
+        val vBox = VBox()
+        vBox.spacing = 10.0
+        vBox.alignment = Pos.CENTER
+        vBox.children.addAll(label, choiceBox, nextButton)
+        val scene = Scene(vBox)
+        val createStage = Stage()
+        createStage.scene = scene
+        createStage.isResizable = false
+        createStage.height = 200.0
+        createStage.width = 200.0
+        createStage.show()
+        nextButton.setOnMouseClicked {
+            val answer = choiceBox.value
+            when(val index = listOfDates.indexOf(answer)){
+                -1 -> onBackPressed()
+                0 -> initialize()
+                else -> {
+                    selectedObjectId = selectedObject.childObjects[index-1]
+                    selectedObjectData = factory.objects.first{
+                        it.first.id == selectedObjectId
+                    }
+                    selectedObject = selectedObjectData.first
+                    selectedObjectCoordinate = selectedObjectData.second
+                    initialize()
+                }
+            }
+            createStage.close()
+        }
+    }
+
+    @FXML
+    fun onEditSizeButtonClick() {
+        //first scene
+        val textLabel = Label("Выберите промежуток дат")
+        val firstDatePicker = DatePicker(selectedObject.dateStart)
+        val secondDatePicker = DatePicker(selectedObject.dateEnd)
+        val nextButton = Button("Далее")
+        fun DatePicker.correctDatePickerCheck() = dateCheck(selectedObject, this.value) && firstDatePicker.value < secondDatePicker.value
+        firstDatePicker.setOnAction {
+            nextButton.isDisable = !firstDatePicker.correctDatePickerCheck()
+        }
+        secondDatePicker.setOnAction {
+            nextButton.isDisable = !secondDatePicker.correctDatePickerCheck()
+        }
+        val vBox = VBox()
+        vBox.spacing = 10.0
+        vBox.alignment = Pos.CENTER
+        vBox.children.addAll(textLabel, firstDatePicker, secondDatePicker, nextButton)
+        val scene = Scene(vBox)
+        val createStage = Stage()
+        createStage.scene = scene
+        createStage.isResizable = false
+        createStage.height = 200.0
+        createStage.width = 200.0
+        createStage.show()
+
+        //second scene
+        nextButton.setOnMouseClicked {
+            textLabel.text = "Измените размер, если необходимо"
+            val extraCanvas = Canvas(factory.length * scale + 1, factory.width * scale + 1)
+            drawFactory(extraCanvas, factory, firstDatePicker.value, scale)
+            extraCanvas.setOnMouseClicked {
+                when (it.button){
+                    MouseButton.PRIMARY -> colorPixels(it, false, extraCanvas)
+                    MouseButton.SECONDARY -> colorPixels(it, true, extraCanvas)
+                    else -> {}
+                }
+            }
+            extraCanvas.setOnMouseDragged {
+                when (it.button){
+                    MouseButton.PRIMARY -> colorPixels(it, false, extraCanvas)
+                    MouseButton.SECONDARY -> colorPixels(it, true, extraCanvas)
+                    else -> {}
+                }
+            }
+            vBox.children.clear()
+            vBox.children.addAll(textLabel, extraCanvas, nextButton)
+            createStage.height = extraCanvas.height + 100.0
+            createStage.width = extraCanvas.width + 30.0
+            nextButton.setOnMouseClicked {
+                val minX = coordinateList.minOf {it.x}
+                val minY = coordinateList.minOf {it.y}
+                coordinateList.forEach {
+                    it.x -= minX
+                    it.y -= minY
+                }
+                if (firstDatePicker.value == selectedObject.dateStart && secondDatePicker.value == selectedObject.dateEnd){
+                    selectedObject.coordinates = coordinateList
+                } else {
+                    fun addChildObject(newFactoryObject: FactoryObject){
+                        if (selectedObject.parentObject == null){
+                            selectedObject.childObjects.add(newFactoryObject.id)
+                        }
+                        else{
+                            factory.objects.first {
+                                it.first.id == selectedObject.parentObject
+                            }.first.childObjects.add(newFactoryObject.id)
+                        }
+                    }
+                    val newFactoryObject = FactoryObject(
+                        id = if(factory.objects.size > 0) factory.objects.last().first.id + 1 else 0,
+                        name = selectedObject.name,
+                        color = selectedObject.color,
+                        coordinates = coordinateList,
+                        dateStart = firstDatePicker.value,
+                        dateEnd = secondDatePicker.value,
+                        parentObject = selectedObject.parentObject ?: selectedObjectId
+                    )
+                    factory.objects.add(Pair(newFactoryObject, selectedObjectCoordinate.copy()))
+                    addChildObject(newFactoryObject)
+
+                    if (firstDatePicker.value > selectedObject.dateStart){
+                        val tempDate = selectedObject.dateEnd
+                        selectedObject.dateEnd = firstDatePicker.value.minusDays(1)
+                        if (secondDatePicker.value < tempDate){
+                            val extraFactoryObject = FactoryObject(
+                                id = factory.objects.last().first.id + 2,
+                                name = selectedObject.name,
+                                color = selectedObject.color,
+                                coordinates = selectedObject.coordinates,
+                                dateStart = secondDatePicker.value.plusDays(1),
+                                dateEnd = tempDate,
+                                parentObject = selectedObject.parentObject ?: selectedObjectId
+                            )
+                            factory.objects.add(Pair(extraFactoryObject, selectedObjectCoordinate.copy()))
+                            addChildObject(extraFactoryObject)
+                        }
+                    } else if(secondDatePicker.value < selectedObject.dateEnd){
+                        selectedObject.dateStart = secondDatePicker.value.plusDays(1)
+                    }
+                    data.setObjectId(newFactoryObject.id)
+                }
+                createStage.close()
+                val stage = this.canvas.scene.window as Stage
+                val loader = FXMLLoader(FactoryApplication::class.java.getResource("ObjectEditView.fxml"))
+                stage.scene = Scene(loader.load() as Parent)
+                stage.show()
+            }
+        }
     }
 
     private fun canvasSetup(){
@@ -127,6 +306,10 @@ class ObjectEditController {
         }
     }
     private fun datePickersSetup(){
+        if (selectedObject.parentObject != null){
+            startDatePicker.isDisable = true
+            endDatePicker.isDisable = true
+        }
         if (currentDatePicker.value == null) {
             val dateAtTheMoment = LocalDate.now()
             if (dateCheck(selectedObject, dateAtTheMoment)){
@@ -167,13 +350,24 @@ class ObjectEditController {
 
     @FXML
     fun onSaveButtonClick(event: ActionEvent) {
-        selectedObject.color = colorPicker.value
+        //selectedObject.color = colorPicker.value
         selectedObject.dateStart = startDatePicker.value
         selectedObject.dateEnd = endDatePicker.value
-        selectedObject.name = objectNameText.text
+        //selectedObject.name = objectNameText.text
         val bounds = shape.boundsInParent
         selectedObjectCoordinate.x = bounds.minX.toUserCoordinate(scale)
         selectedObjectCoordinate.y = bounds.minY.toUserCoordinate(scale)
+        fun parentAndChildsSetup(fo: FactoryObject){
+            val parent = factory.objects.first { it.first.id == fo.parentObject }.first
+            parent.name = objectNameText.text
+            parent.color = colorPicker.value
+            parent.childObjects.forEach { id ->
+                val child = factory.objects.first { it.first.id == id }.first
+                child.name = objectNameText.text
+                child.color = colorPicker.value
+            }
+        }
+        parentAndChildsSetup(selectedObject)
         data.setFactoryLayout(factory)
         val stage = this.canvas.scene.window as Stage
         stage.close()
@@ -270,6 +464,27 @@ class ObjectEditController {
             it.y -= minY
         }
         isItOkToSave()
+    }
+
+    private fun colorPixels(e: MouseEvent, eraser: Boolean, canvas: Canvas){
+        val gc = canvas.graphicsContext2D
+        val x = e.x - e.x % scale
+        val y = e.y - e.y % scale
+        if ( x < canvas.width - 1  && x >= 0 && y >= 0 && y < canvas.height - 1){
+            val coordinate = Coordinate(x.toInt() / scale.toInt(), y.toInt() / scale.toInt())
+            if (!factory.excludedCoordinates.contains(coordinate)){
+                if (eraser){
+                    gc.fill =  Color.WHITE
+                    coordinateList.remove(coordinate)
+                }
+                else{
+                    gc.fill = selectedObject.color
+                    coordinateList.add(coordinate)
+                    coordinateList = coordinateList.distinct().toMutableList()
+                }
+                gc.fillRect(x + 1, y + 1, scale - 1, scale - 1)
+            }
+        }
     }
 }
 

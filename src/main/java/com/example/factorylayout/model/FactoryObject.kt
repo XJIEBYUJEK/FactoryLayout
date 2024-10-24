@@ -15,7 +15,7 @@ import java.time.LocalDate
 data class FactoryObject(
     val id: Int,
     var name: String?,
-    val coordinates: List<Coordinate>,
+    var coordinates: List<Coordinate>,
     @Serializable (with = ColorAsStringSerializer::class)
     var color: Color,
     @Serializable (with = DateAsStringSerializer::class)
