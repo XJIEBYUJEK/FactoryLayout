@@ -273,12 +273,27 @@ class FactoryController {
                     }
                 }
             }
-            collisionsId.distinct().forEach{
-                val objectNumber = listView.items.indexOf(pair)
-                if (it == -1) {
+            collisionsId.distinct().forEach{ id ->
+
+                val objectNumber = if (pair.first.parentObject != null){
+                    listView.items.indexOf(factory.objects.first {it.first.id == pair.first.parentObject  })
+                } else {
+                    listView.items.indexOf(pair)
+                }
+
+
+                if (id == -1) {
                     textField.text += "Объект $objectNumber. ${pair.first.name} наслаивается на границы цеха.\n"
                 } else {
-                    val obj = listView.items.first{ obj -> obj.first.id == it}
+                    val obj = listView.items.first{ obj ->
+                        val tempObject = factory.objects.first {it.first.id == id}.first
+                        if(tempObject.parentObject == null){
+                            obj.first.id == id
+                        } else {
+                            obj.first.id == tempObject.parentObject
+                        }
+
+                    }
                     textField.text += "Объект $objectNumber. ${pair.first.name} имеет коллизии с объектом ${listView.items.indexOf(obj)}. ${obj.first.name}\n"
                 }
             }
@@ -494,11 +509,15 @@ class FactoryController {
                 style.setFillForegroundColor(xssfColor)
                 style.fillPattern = FillPatternType.SOLID_FOREGROUND
 
+                val objForDate = if (i.first.parentObject != null){
+                    factory.objects.first { it.first.id == i.first.parentObject }.first
+                } else i.first
+
                 row = spreadsheet.createRow(index)
                 row.createCell(0).cellStyle = style
                 row.createCell(1).setCellValue(i.first.name)
-                row.createCell(2).setCellValue(dateInfo(i.first, true).toCustomString())
-                row.createCell(3).setCellValue(dateInfo(i.first, false).toCustomString())
+                row.createCell(2).setCellValue(dateInfo(objForDate, true).toCustomString())
+                row.createCell(3).setCellValue(dateInfo(objForDate, false).toCustomString())
                 row.createCell(4).setCellValue(i.first.coordinates.size.toString())
                 index++
             }

@@ -88,6 +88,7 @@ class ObjectEditController {
     @FXML
     fun initialize() {
         if(selectedObject.childObjects.isNotEmpty() && flag){
+
             dialogOptionSetup()
         } else {
             datePickersSetup()
@@ -124,8 +125,8 @@ class ObjectEditController {
         createStage.isResizable = false
         createStage.height = 200.0
         createStage.width = 200.0
-        createStage.show()
         nextButton.setOnMouseClicked {
+            createStage.close()
             val answer = choiceBox.value
             when(val index = listOfDates.indexOf(answer)){
                 -1 -> onBackPressed()
@@ -140,8 +141,8 @@ class ObjectEditController {
                     initialize()
                 }
             }
-            createStage.close()
         }
+        createStage.showAndWait()
     }
 
     @FXML
