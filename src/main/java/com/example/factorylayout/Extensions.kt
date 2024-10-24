@@ -110,3 +110,5 @@ fun LocalDate.toCustomString() =
     if (this.dayOfMonth < 10) {"0${this.dayOfMonth}."} else {"${this.dayOfMonth}."} +
             if (this.monthValue < 10) {"0${this.monthValue}."} else {"${this.monthValue}."} +
             "${this.year}"
+
+fun Int.findFactoryObjectById(factory: Factory) = factory.objects.first { it.first.id == this }.first

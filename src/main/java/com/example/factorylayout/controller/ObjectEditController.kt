@@ -29,11 +29,8 @@ import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
 import javafx.scene.transform.Rotate
 import javafx.stage.Stage
-import java.lang.Math.toRadians
 import java.time.LocalDate
-import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.sin
 
 class ObjectEditController {
 
@@ -105,7 +102,7 @@ class ObjectEditController {
         flag = false
         val listOfDates = listOf("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}") +
                 selectedObject.childObjects.map { id ->
-                    val child = factory.objects.first { it.first.id == id }.first
+                    val child = id.findFactoryObjectById(factory)
                     "${child.dateStart.toCustomString()} - ${child.dateEnd.toCustomString()}"
                 }
         val label = Label("Выберите редактируемый\n промежуток")
@@ -212,9 +209,7 @@ class ObjectEditController {
                             selectedObject.childObjects.add(newFactoryObject.id)
                         }
                         else{
-                            factory.objects.first {
-                                it.first.id == selectedObject.parentObject
-                            }.first.childObjects.add(newFactoryObject.id)
+                            selectedObject.parentObject!!.findFactoryObjectById(factory).childObjects.add(newFactoryObject.id)
                         }
                     }
                     val newFactoryObject = FactoryObject(
@@ -354,21 +349,19 @@ class ObjectEditController {
 
     @FXML
     fun onSaveButtonClick(event: ActionEvent) {
-        //selectedObject.color = colorPicker.value
         selectedObject.dateStart = startDatePicker.value
         selectedObject.dateEnd = endDatePicker.value
-        //selectedObject.name = objectNameText.text
         val bounds = shape.boundsInParent
         selectedObjectCoordinate.x = bounds.minX.toUserCoordinate(scale)
         selectedObjectCoordinate.y = bounds.minY.toUserCoordinate(scale)
         fun parentAndChildsSetup(fo: FactoryObject){
             val parent = if (fo.parentObject != null)
-                factory.objects.first { it.first.id == fo.parentObject }.first
+                fo.parentObject.findFactoryObjectById(factory)
             else selectedObject
             parent.name = objectNameText.text
             parent.color = colorPicker.value
             parent.childObjects.forEach { id ->
-                val child = factory.objects.first { it.first.id == id }.first
+                val child = id.findFactoryObjectById(factory)
                 child.name = objectNameText.text
                 child.color = colorPicker.value
             }

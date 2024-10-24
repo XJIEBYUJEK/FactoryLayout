@@ -20,8 +20,6 @@ import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
-import javafx.scene.shape.Rectangle
-import javafx.scene.shape.Shape
 import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -286,7 +284,7 @@ class FactoryController {
                     textField.text += "Объект $objectNumber. ${pair.first.name} наслаивается на границы цеха.\n"
                 } else {
                     val obj = listView.items.first{ obj ->
-                        val tempObject = factory.objects.first {it.first.id == id}.first
+                        val tempObject = id.findFactoryObjectById(factory)
                         if(tempObject.parentObject == null){
                             obj.first.id == id
                         } else {
@@ -321,9 +319,7 @@ class FactoryController {
                     infoTextField.text += if (pair.first.parentObject == null)
                         objectInfoText(pair.first)
                     else
-                        objectInfoText(factory.objects.first {
-                            it.first.id == pair.first.parentObject
-                        }.first)
+                        objectInfoText(pair.first.parentObject!!.findFactoryObjectById(factory))
                 } catch (_: Exception){}
             }
         }
@@ -371,7 +367,7 @@ class FactoryController {
             var minArea = fo.objectArea()
             var maxArea = fo.objectArea()
             fo.childObjects.forEach { id ->
-                val tempArea = factory.objects.first { it.first.id == id }.first.objectArea()
+                val tempArea = id.findFactoryObjectById(factory).objectArea()
                 minArea = min(minArea, tempArea)
                 maxArea = max(maxArea, tempArea)
             }
@@ -388,7 +384,7 @@ class FactoryController {
             var minDate = fo.dateStart
             var maxDate = fo.dateEnd
             fo.childObjects.forEach { id ->
-                val childObject = factory.objects.first { it.first.id == id }.first
+                val childObject = id.findFactoryObjectById(factory)
                 if (minDate > childObject.dateStart) minDate = childObject.dateStart
                 if (maxDate < childObject.dateEnd) maxDate = childObject.dateEnd
             }
@@ -414,7 +410,7 @@ class FactoryController {
     private fun objectInfoText(fo: FactoryObject): String = "Имя: ${fo.name}\n" +
             "Начальная дата:\n ${dateInfo(fo, true).toCustomString()}\n" +
             "Конечная дата:\n ${dateInfo(fo, false).toCustomString()}\n" +
-            "Площадь: ${areaInfoText(fo)} м²"
+            "Площадь:\n ${areaInfoText(fo)} м²"
 
     private fun allObjectsArea(date: LocalDate): Int{
         var area = 0
@@ -510,7 +506,7 @@ class FactoryController {
                 style.fillPattern = FillPatternType.SOLID_FOREGROUND
 
                 val objForDate = if (i.first.parentObject != null){
-                    factory.objects.first { it.first.id == i.first.parentObject }.first
+                    i.first.parentObject!!.findFactoryObjectById(factory)
                 } else i.first
 
                 row = spreadsheet.createRow(index)
