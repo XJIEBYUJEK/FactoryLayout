@@ -138,6 +138,9 @@ class ObjectEditController {
                     }
                     selectedObject = selectedObjectData.first
                     selectedObjectCoordinate = selectedObjectData.second
+                    coordinateList = selectedObject.coordinates.map {
+                        Coordinate(it.x + selectedObjectCoordinate.x, it.y + selectedObjectCoordinate.y)
+                    }.toMutableList()
                     initialize()
                 }
             }
@@ -202,7 +205,7 @@ class ObjectEditController {
                     it.y -= minY
                 }
                 if (firstDatePicker.value == selectedObject.dateStart && secondDatePicker.value == selectedObject.dateEnd){
-                    selectedObject.coordinates = coordinateList
+                    selectedObject.coordinates = coordinateList.map { it.copy() }
                 } else {
                     fun addChildObject(newFactoryObject: FactoryObject){
                         if (selectedObject.parentObject == null){
@@ -218,7 +221,7 @@ class ObjectEditController {
                         id = if(factory.objects.size > 0) factory.objects.last().first.id + 1 else 0,
                         name = selectedObject.name,
                         color = selectedObject.color,
-                        coordinates = coordinateList,
+                        coordinates = coordinateList.map { it.copy() },
                         dateStart = firstDatePicker.value,
                         dateEnd = secondDatePicker.value,
                         parentObject = selectedObject.parentObject ?: selectedObjectId
@@ -231,10 +234,10 @@ class ObjectEditController {
                         selectedObject.dateEnd = firstDatePicker.value.minusDays(1)
                         if (secondDatePicker.value < tempDate){
                             val extraFactoryObject = FactoryObject(
-                                id = factory.objects.last().first.id + 2,
+                                id = factory.objects.last().first.id + 1,
                                 name = selectedObject.name,
                                 color = selectedObject.color,
-                                coordinates = selectedObject.coordinates,
+                                coordinates = selectedObject.coordinates.map { it.copy() },
                                 dateStart = secondDatePicker.value.plusDays(1),
                                 dateEnd = tempDate,
                                 parentObject = selectedObject.parentObject ?: selectedObjectId
@@ -307,7 +310,7 @@ class ObjectEditController {
         }
     }
     private fun datePickersSetup(){
-        if (selectedObject.parentObject != null){
+        if (selectedObject.parentObject != null || selectedObject.childObjects.isNotEmpty()){
             startDatePicker.isDisable = true
             endDatePicker.isDisable = true
         }
@@ -359,7 +362,9 @@ class ObjectEditController {
         selectedObjectCoordinate.x = bounds.minX.toUserCoordinate(scale)
         selectedObjectCoordinate.y = bounds.minY.toUserCoordinate(scale)
         fun parentAndChildsSetup(fo: FactoryObject){
-            val parent = factory.objects.first { it.first.id == fo.parentObject }.first
+            val parent = if (fo.parentObject != null)
+                factory.objects.first { it.first.id == fo.parentObject }.first
+            else selectedObject
             parent.name = objectNameText.text
             parent.color = colorPicker.value
             parent.childObjects.forEach { id ->
