@@ -127,14 +127,43 @@ class FactoryController {
     }
 
     fun onDeleteButtonClick() {
-        val index = listView.selectionModel.selectedIndex
-        if(index > -1){
-            val selectedItem = listView.items[index]
-            listView.items.remove(selectedItem)
-            factory.objects.remove(selectedItem)
-            data.setFactoryLayout(factory)
-            initialize()
+        val textLabel = Label("Вы уверены, что хотите удалить объект?")
+        val yesButton = Button("Да")
+        val cancelButton = Button("Отмена")
+        val hBox = HBox().apply {
+            spacing = 10.0
+            alignment = Pos.CENTER
+            children.addAll(cancelButton, yesButton)
         }
+        val vBox = VBox().apply {
+            spacing = 10.0
+            alignment = Pos.CENTER
+            children.addAll(textLabel, hBox)
+        }
+        val createStage = Stage().apply {
+            scene = Scene(vBox)
+            isResizable = false
+            height = 100.0
+            width = 250.0
+        }
+        yesButton.setOnMouseClicked {
+            val index = listView.selectionModel.selectedIndex
+            if(index > -1){
+                val selectedItem = listView.items[index]
+                listView.items.remove(selectedItem)
+                factory.objects.remove(selectedItem)
+                selectedItem.first.childObjects.forEach { id ->
+                    factory.objects.remove(factory.objects.first { it.first.id == id })
+                }
+                data.setFactoryLayout(factory)
+                initialize()
+            }
+            createStage.close()
+        }
+        cancelButton.setOnMouseClicked {
+            createStage.close()
+        }
+        createStage.show()
     }
 
     fun onEditButtonClick(){

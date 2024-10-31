@@ -24,7 +24,12 @@ data class FactoryObject(
     var dateEnd: LocalDate,
     val parentObject: Int? = null,
     val childObjects: MutableList<Int> = mutableListOf()
-)
+){
+    fun isItParent() = this.childObjects.isNotEmpty()
+
+    fun isItChild() = this.parentObject != null
+
+}
 
 object ColorAsStringSerializer : KSerializer<Color> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Color", PrimitiveKind.STRING)

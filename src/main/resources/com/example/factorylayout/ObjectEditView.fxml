@@ -17,6 +17,8 @@
                 <TextField fx:id="objectNameText" layoutX="31.0" layoutY="13.0" promptText="Имя объекта" />
                 <ColorPicker fx:id="colorPicker" layoutX="269.0" layoutY="13.0" onAction="#onColorPickerAction" />
             <Button fx:id="editSizeButton" layoutX="588.0" layoutY="13.0" mnemonicParsing="false" onAction="#onEditSizeButtonClick" text="Разбить на даты/Изменить размер" />
+            <Button fx:id="unionButton" layoutX="907.0" layoutY="13.0" mnemonicParsing="false" onAction="#onUnionButtonClick" text="Объдинить с соседним" />
+            <Button fx:id="removeButton" layoutX="1130.0" layoutY="13.0" mnemonicParsing="false" onAction="#onRemoveButtonClick" text="Удалить промежуток" />
             </children>
         </AnchorPane>
     </top>

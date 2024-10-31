@@ -23,47 +23,43 @@ import javafx.scene.control.TextField
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.shape.Shape
 import javafx.scene.transform.Rotate
 import javafx.stage.Stage
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import kotlin.math.min
 
 class ObjectEditController {
 
     @FXML
+    lateinit var removeButton: Button
+    @FXML
+    lateinit var unionButton: Button
+    @FXML
     lateinit var editSizeButton: Button
-
     @FXML
     private lateinit var borderPane: BorderPane
-
     @FXML
     private lateinit var canvas: Canvas
-
     @FXML
     private lateinit var groupCanvas: Group
-
     @FXML
     private lateinit var colorPicker: ColorPicker
-
     @FXML
     private lateinit var currentDatePicker: DatePicker
-
     @FXML
     private lateinit var dateSlider: Slider
-
     @FXML
     private lateinit var endDatePicker: DatePicker
-
     @FXML
     private lateinit var objectNameText: TextField
-
     @FXML
     private lateinit var saveButton: Button
-
     @FXML
     private lateinit var startDatePicker: DatePicker
 
@@ -81,11 +77,17 @@ class ObjectEditController {
     private var coordinateList = selectedObject.coordinates.map {
         Coordinate(it.x + selectedObjectCoordinate.x, it.y + selectedObjectCoordinate.y)
     }.toMutableList()
+    private var element = Element.ELSE
+
+    enum class Element{
+        FIRST,
+        LAST,
+        ELSE
+    }
 
     @FXML
     fun initialize() {
         if(selectedObject.childObjects.isNotEmpty() && flag){
-
             dialogOptionSetup()
         } else {
             datePickersSetup()
@@ -100,31 +102,53 @@ class ObjectEditController {
 
     private fun dialogOptionSetup(){
         flag = false
-        val listOfDates = listOf("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}") +
+        val listOfDates= (listOf("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}") +
                 selectedObject.childObjects.map { id ->
                     val child = id.findFactoryObjectById(factory)
                     "${child.dateStart.toCustomString()} - ${child.dateEnd.toCustomString()}"
-                }
+                }).toMutableList()
         val label = Label("Выберите редактируемый\n промежуток")
-        val choiceBox = ChoiceBox(FXCollections.observableList(listOfDates))
-        val nextButton = Button("Далее")
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy")
+        val choiceBox = ChoiceBox(FXCollections.observableList(listOfDates.sortedBy { range ->
+            val  startDateString = range.split(" - ")[0]
+            dateFormat.parse(startDateString)
+        }))
+        val nextButton = Button("Далее").apply {
+            isDisable = true
+        }
+        /*val unionButton = Button("Объединить").apply {
+            isDisable = true
+        }*/
         choiceBox.setOnAction {
             nextButton.isDisable = choiceBox.value == null
+            //unionButton.isDisable = choiceBox.value == null
         }
-        nextButton.isDisable = true
-        val vBox = VBox()
-        vBox.spacing = 10.0
-        vBox.alignment = Pos.CENTER
-        vBox.children.addAll(label, choiceBox, nextButton)
-        val scene = Scene(vBox)
-        val createStage = Stage()
-        createStage.scene = scene
-        createStage.isResizable = false
-        createStage.height = 200.0
-        createStage.width = 200.0
+        /*val hBox = HBox().apply {
+            spacing = 10.0
+            alignment = Pos.CENTER
+            children.addAll(unionButton, nextButton)
+        }*/
+        val vBox = VBox().apply {
+            spacing = 10.0
+            alignment = Pos.CENTER
+            children.addAll(label, choiceBox, nextButton)
+        }
+        val createStage = Stage().apply {
+            scene = Scene(vBox)
+            isResizable = false
+            height = 200.0
+            width = 200.0
+        }
+
         nextButton.setOnMouseClicked {
             createStage.close()
             val answer = choiceBox.value
+            element = when(choiceBox.items.indexOf(answer)){
+                0 -> Element.FIRST
+                choiceBox.items.lastIndex -> Element.LAST
+                else -> Element.ELSE
+            }
+
             when(val index = listOfDates.indexOf(answer)){
                 -1 -> onBackPressed()
                 0 -> initialize()
@@ -142,6 +166,79 @@ class ObjectEditController {
                 }
             }
         }
+
+        /*unionButton.setOnMouseClicked {
+            fun isItParent(value: String) = listOfDates.indexOf(value) == 0
+            val answer = choiceBox.value
+            val indexInChoiceBox = choiceBox.items.indexOf(answer)
+            fun Int.toListIndex() = listOfDates.indexOf(choiceBox.items[this])
+            val indexInListOfDates = indexInChoiceBox.toListIndex()
+            when(indexInChoiceBox){
+                0 -> {
+                    fun listUpdate(newValue: String){
+                        listOfDates.remove(answer)
+                        listOfDates[0] = newValue
+                        choiceBox.items.remove(answer)
+                        choiceBox.items[0] = newValue
+                    }
+                    if (isItParent(answer)){   // выбран первый элемент, который является родителем
+                        val nextObjectId = selectedObject.childObjects[1]
+                        val nextObjectData = factory.findPairById(nextObjectId)
+                        val nextObject = nextObjectData.first
+                        selectedObject.apply {
+                            dateEnd = nextObject.dateEnd
+                            childObjects.remove(nextObjectId)
+                            coordinates = nextObject.coordinates.map { it.copy() }
+                        }
+                        selectedObjectCoordinate = nextObjectData.second.copy()
+                        factory.objects.remove(nextObjectData)
+                        listUpdate("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}")
+                    } else {
+                        val currentObjectId = selectedObject.childObjects[indexInListOfDates - 1]
+                        val currentObjectData = factory.findPairById(currentObjectId)
+                        val currentObject = currentObjectData.first
+                        if(isItParent(choiceBox.items[1])){ // второй элемент является родительским объектом
+                            selectedObject.dateStart = currentObject.dateStart
+                            listUpdate("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}")
+                        } else{
+                            val nextObjectId = selectedObject.childObjects[indexInListOfDates]
+                            val nextObjectData = factory.findPairById(nextObjectId)
+                            val nextObject = nextObjectData.first
+                            nextObject.dateStart = currentObject.dateStart
+                            listUpdate("${nextObject.dateStart.toCustomString()} - ${nextObject.dateEnd.toCustomString()}")
+                        }
+                        selectedObject.childObjects.remove(currentObjectId)
+                        factory.objects.remove(currentObjectData)
+                    }
+                }
+                else -> {
+                    val previousListIndex = (indexInChoiceBox-1).toListIndex()
+                    fun listUpdate(newValue: String){
+                        listOfDates.remove(answer)
+                        listOfDates[previousListIndex] = newValue
+                        choiceBox.items.remove(answer)
+                        choiceBox.items[indexInChoiceBox - 1] = newValue
+                    }
+                    if (isItParent(answer)){
+                        val previousObjectId = selectedObject.childObjects[previousListIndex - 1]
+                        val previousObjectData = factory.findPairById(previousObjectId)
+                        val previousObject = previousObjectData.first
+                        selectedObject.apply {
+                            dateStart = previousObject.dateStart
+                            childObjects.remove(previousObjectId)
+                            coordinates = previousObject.coordinates.map { it.copy() }
+                        }
+                        selectedObjectCoordinate = previousObjectData.second.copy()
+                        factory.objects.remove(
+                            factory.objects.first{ it.first == previousObject}
+                        )
+                        listUpdate("${selectedObject.dateStart.toCustomString()} - ${selectedObject.dateEnd.toCustomString()}")
+                    }
+                }
+            }
+            data.setFactoryLayout(factory)
+        }*/
+
         createStage.showAndWait()
     }
 
@@ -259,7 +356,6 @@ class ObjectEditController {
             min((borderPane.prefHeight-100)/factory.width,
                 borderPane.prefWidth/factory.length).toInt().toDouble(),
             50.0)
-
         canvas.width = factory.length * scale + 1
         canvas.height = factory.width * scale + 1
         val tempFactory = factory.makeCopy()
@@ -309,6 +405,11 @@ class ObjectEditController {
             startDatePicker.isDisable = true
             endDatePicker.isDisable = true
         }
+        when (element){
+            Element.FIRST -> startDatePicker.isDisable = false
+            Element.LAST -> endDatePicker.isDisable = false
+            Element.ELSE -> {}
+        }
         if (currentDatePicker.value == null) {
             val dateAtTheMoment = LocalDate.now()
             if (dateCheck(selectedObject, dateAtTheMoment)){
@@ -335,11 +436,26 @@ class ObjectEditController {
     private fun upperMenuSetup(){
         colorPicker.value = selectedObject.color
         objectNameText.text = selectedObject.name
+        if (selectedObject.isItChild() || selectedObject.isItParent()){
+            removeButton.isVisible = true
+            unionButton.isVisible = true
+            when(element){
+                Element.ELSE -> removeButton.isDisable = true
+                Element.FIRST -> unionButton.isDisable = true
+                Element.LAST -> {}
+            }
+        } else {
+            removeButton.isVisible = false
+            unionButton.isVisible = false
+        }
     }
+
     @FXML
     fun onBackPressed() {
-        val stage = this.canvas.scene.window as Stage
-        stage.close()
+        if(this.startDatePicker.scene != null){
+            val stage = this.startDatePicker.scene.window as Stage
+            stage.close()
+        }
     }
 
     @FXML
@@ -484,6 +600,89 @@ class ObjectEditController {
                 gc.fillRect(x + 1, y + 1, scale - 1, scale - 1)
             }
         }
+    }
+
+    @FXML
+    fun onUnionButtonClick() {
+        val previousObjectPair = findPreviousObject(selectedObject)
+        if(selectedObject.isItParent()){
+            selectedObject.apply {
+                dateStart = previousObjectPair.first.dateStart
+                coordinates = previousObjectPair.first.coordinates.map { it.copy() }
+                childObjects.remove(previousObjectPair.first.id)
+            }
+            selectedObjectCoordinate = previousObjectPair.second.copy()
+            factory.objects.remove(previousObjectPair)
+        } else {
+            previousObjectPair.first.dateEnd = selectedObject.dateEnd
+            val parent = selectedObject.parentObject!!.findFactoryObjectById(factory)
+            parent.childObjects.remove(selectedObjectId)
+            factory.objects.remove(selectedObjectData)
+        }
+        data.setFactoryLayout(factory)
+        onBackPressed()
+    }
+
+    private fun findPreviousObject(fo: FactoryObject): Pair<FactoryObject, Coordinate>{
+        val date = fo.dateStart
+        val dateList = mutableListOf<LocalDate>()
+        fun generateDateFromList(): LocalDate{
+            var dateOfPrevious: LocalDate? = null
+            dateList.forEach {
+                if( date > it){
+                    if (dateOfPrevious == null){
+                        dateOfPrevious = it
+                    } else {
+                        if (dateOfPrevious!! < it){
+                            dateOfPrevious = it
+                        }
+                    }
+                }
+            }
+            return dateOfPrevious!!
+        }
+        if (fo.isItParent()){
+            fo.childObjects.forEach {
+                dateList.add(it.findFactoryObjectById(factory).dateStart)
+            }
+            val dateOfPrevious = generateDateFromList()
+            return factory.objects.first {
+                (it.first.dateStart == dateOfPrevious) && fo.childObjects.contains(it.first.id)
+            }
+        }
+        else{
+            val parent = fo.parentObject!!.findFactoryObjectById(factory)
+            dateList.add(parent.dateStart)
+            parent.childObjects.forEach {
+                dateList.add(it.findFactoryObjectById(factory).dateStart)
+            }
+            val dateOfPrevious = generateDateFromList()
+            return factory.objects.first {
+                (it.first.dateStart == dateOfPrevious) && (parent.childObjects.contains(it.first.id) || parent.id == it.first.id)
+            }
+        }
+    }
+
+    @FXML
+    fun onRemoveButtonClick() {
+        if(selectedObject.isItParent()){
+            val child = factory.findPairById(selectedObject.childObjects.first())
+            selectedObject.apply {
+                dateStart = child.first.dateStart
+                dateEnd = child.first.dateEnd
+                coordinates = child.first.coordinates.map { it.copy() }
+                childObjects.remove(child.first.id)
+            }
+            selectedObjectCoordinate = child.second.copy()
+            factory.objects.remove(child)
+
+        } else {
+            val parent = selectedObject.parentObject!!.findFactoryObjectById(factory)
+            parent.childObjects.remove(selectedObjectId)
+            factory.objects.remove(selectedObjectData)
+        }
+        data.setFactoryLayout(factory)
+        onBackPressed()
     }
 }
 
