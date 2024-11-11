@@ -23,7 +23,6 @@ import javafx.scene.control.TextField
 import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
-import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
@@ -361,6 +360,7 @@ class ObjectEditController {
         val tempFactory = factory.makeCopy()
         tempFactory.objects.remove(selectedObjectData)
         drawFactory(canvas, tempFactory, currentDatePicker.value, scale)
+        drawObjectShadow(scale)
         if(groupCanvas.children.size == 1){
             shapeSetup()
         }
@@ -429,7 +429,7 @@ class ObjectEditController {
     private fun isItOkToSave(){
         val bounds = shape.boundsInParent
         val isFigureOutsideLayout = bounds.minX < 0 || bounds.minY < 0 || bounds.maxX > canvas.width || bounds.maxY > canvas.height
-        val isDateCorrect = (startDatePicker.value != null || endDatePicker.value != null)
+        val isDateCorrect = (startDatePicker.value != null && endDatePicker.value != null && startDatePicker.value <= endDatePicker.value)
         saveButton.isDisable = isFigureOutsideLayout || !isDateCorrect
     }
 
@@ -503,16 +503,18 @@ class ObjectEditController {
     @FXML
     fun onEndDatePickerAction() {
         val value = endDatePicker.value
+        val value2 = startDatePicker.value
+        val value3 = currentDatePicker.value
         if (value != null){
-            if (value < currentDatePicker.value) {
+            if (value < value3) {
                 currentDatePicker.value = value
                 initialize()
             }
-            if (startDatePicker.value != null && value < startDatePicker.value) {
+            if (startDatePicker.value != null && value < value2) {
                 updateSlider(false)
                 startDatePicker.value = null
             }
-            if (startDatePicker.value != null){
+            if (value2 != null){
                 updateSlider(true)
             }
         }
@@ -525,12 +527,14 @@ class ObjectEditController {
     @FXML
     fun onStartDatePickerAction() {
         val value = startDatePicker.value
+        val value2 = endDatePicker.value
+        val value3 = currentDatePicker.value
         if (value != null){
-            if (value > currentDatePicker.value){
+            if (value > value3){
                 currentDatePicker.value = value
                 initialize()
             }
-            if (endDatePicker.value != null && value > endDatePicker.value) {
+            if (endDatePicker.value != null && value > value2) {
                 endDatePicker.value = null
                 updateSlider(false)
             }
@@ -683,6 +687,52 @@ class ObjectEditController {
         }
         data.setFactoryLayout(factory)
         onBackPressed()
+    }
+
+    private fun drawObjectShadow(scale: Double){
+        val gc = canvas.graphicsContext2D
+        fun Int.rearrangeCoordinate(flag: Boolean) =
+            if(flag)
+                (this + selectedObjectCoordinate.x) * scale
+            else
+                (this + selectedObjectCoordinate.y) * scale
+        gc.lineWidth = 1.0
+        gc.stroke = selectedObject.color
+        selectedObject.coordinates.forEach {
+            if(!selectedObject.coordinates.contains(Coordinate(it.x + 1, it.y))){
+                gc.strokeLine(
+                    (it.x + 1).rearrangeCoordinate(true),
+                    it.y.rearrangeCoordinate(false),
+                    (it.x + 1).rearrangeCoordinate(true),
+                    (it.y + 1).rearrangeCoordinate(false)
+                )
+            }
+            if(!selectedObject.coordinates.contains(Coordinate(it.x - 1, it.y))){
+                gc.strokeLine(
+                    it.x.rearrangeCoordinate(true),
+                    it.y.rearrangeCoordinate(false),
+                    it.x.rearrangeCoordinate(true),
+                    (it.y + 1).rearrangeCoordinate(false)
+                )
+            }
+            if(!selectedObject.coordinates.contains(Coordinate(it.x, it.y + 1))){
+                gc.strokeLine(
+                    it.x.rearrangeCoordinate(true),
+                    (it.y + 1).rearrangeCoordinate(false),
+                    (it.x + 1).rearrangeCoordinate(true),
+                    (it.y + 1).rearrangeCoordinate(false)
+                )
+            }
+            if(!selectedObject.coordinates.contains(Coordinate(it.x, it.y - 1))){
+                gc.strokeLine(
+                    it.x.rearrangeCoordinate(true),
+                    it.y.rearrangeCoordinate(false),
+                    (it.x + 1).rearrangeCoordinate(true),
+                    it.y.rearrangeCoordinate(false)
+                )
+            }
+        }
+
     }
 }
 
