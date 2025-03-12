@@ -149,6 +149,8 @@ class ObjectCreateController {
         }
         createExtraStage()
         drawFactory(factoryCanvas, factory, LocalDate.ofEpochDay(dateSlider.value.toLong()), scale)
+        shape.layoutX = minX * scale
+        shape.layoutY = minY * scale
         shape.setOnMouseDragged { e ->
             shape.layoutX = (e.sceneX - factoryCanvas.layoutX).scaleRefactor(scale)
             shape.layoutY = (e.sceneY - factoryCanvas.layoutY).scaleRefactor(scale)
