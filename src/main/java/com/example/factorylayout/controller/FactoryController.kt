@@ -253,7 +253,7 @@ class FactoryController {
         }
 
         objectsTable.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null })
-        objectsTable.setCellFactory { FactoryObjectsTableCellFactory(factory) }
+        objectsTable.setCellFactory { FactoryObjectsTableCellFactory(factory, currentDatePicker.value) }
         objectsTable.setOnMouseClicked {
             val index = objectsTable.selectionModel.selectedIndex
             val pair = objectsTable.items[index]
