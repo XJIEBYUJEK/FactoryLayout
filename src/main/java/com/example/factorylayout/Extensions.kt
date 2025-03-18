@@ -3,17 +3,19 @@ package com.example.factorylayout
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.Factory
 import com.example.factorylayout.model.FactoryObject
+import com.example.factorylayout.model.NumberForPng
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.DatePicker
 import javafx.scene.control.Slider
 import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
+import javafx.scene.text.Font
 import javafx.scene.transform.Scale
 import java.time.LocalDate
 
 fun dateCheck(fo: FactoryObject, date: LocalDate) = fo.dateStart <= date && fo.dateEnd >= date
 
-fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double, withoutObjects: Boolean = false){
+fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale: Double, withoutObjects: Boolean = false, numbers: List<NumberForPng>? = null){
     val gc = canvas.graphicsContext2D
     gc.clearRect(0.0,0.0, canvas.width, canvas.height)
     var x = 0.5
@@ -71,6 +73,27 @@ fun drawFactory(canvas: Canvas, factory: Factory, currentDate: LocalDate, scale:
         y = 0.5
         x += scale
     }
+     if (!numbers.isNullOrEmpty()){
+         //gc.fill = Color.PURPLE
+         gc.font = Font(scale)
+         /*numbers.forEach {
+             gc.fillText(it.number.toString(), it.x * scale, it.y * scale)
+         }*/
+         numbers.forEach {
+             val x = it.x * scale + 0.25 * scale
+             val y = it.y * scale - 0.1 * scale
+             val text = it.number.toString()
+
+
+             gc.stroke = Color.BLACK
+             gc.lineWidth = scale * 0.1
+             gc.strokeText(text, x, y)
+
+
+             gc.fill = Color.WHITE
+             gc.fillText(text, x, y)
+         }
+     }
 }
 
 fun Double.toUserCoordinate(scale: Double) = (this / scale).toInt()

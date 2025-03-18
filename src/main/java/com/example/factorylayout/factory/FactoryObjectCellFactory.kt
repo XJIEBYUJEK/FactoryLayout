@@ -17,7 +17,7 @@ class FactoryObjectCellFactory: ListCell<Pair<FactoryObject, Coordinate>>() {
         } else{
             val hBox = HBox()
             val rectangle = Rectangle(10.0, 10.0, item.first.color)
-            val label =  Label("${this.index}. ${item.first.name}")
+            val label =  Label("${this.index + 1}. ${item.first.name}")
             hBox.children.addAll(rectangle, label)
             HBox.setMargin(rectangle, Insets(3.5,5.0,0.0,0.0))
             hBox

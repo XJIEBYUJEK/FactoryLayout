@@ -5,6 +5,7 @@ import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.factory.FactoryObjectCellFactory
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
+import com.example.factorylayout.model.NumberForPng
 import javafx.collections.FXCollections
 import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
@@ -13,6 +14,7 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.*
 import javafx.scene.canvas.Canvas
+import javafx.scene.canvas.GraphicsContext
 import javafx.scene.control.*
 import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
@@ -20,6 +22,7 @@ import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
@@ -235,7 +238,9 @@ class FactoryController {
     }
 
     private fun listObjectsSetup(){
-        listView.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null })
+        listView.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null }.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
         listView.setCellFactory { FactoryObjectCellFactory() }
         listView.setOnMouseClicked {
             val index = listView.selectionModel.selectedIndex
@@ -254,7 +259,7 @@ class FactoryController {
                 " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
                 " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
 
-        drawFactory(canvas, factory, currentDatePicker.value, scaleMain)
+        drawFactory(canvas, factory, currentDatePicker.value, scaleMain, numbers = drawNumbers())
     }
 
     private fun textFieldSetup(){
@@ -463,7 +468,8 @@ class FactoryController {
         label2.text = " Отображаемая дата: ${currentDatePicker.value.toCustomString()}," +
                 " занимаемая площадь: ${allObjectsArea(currentDatePicker.value)} из ${factory.width * factory.length - factory.excludedCoordinates.size} м²"
         val printCanvas = Canvas(factory.length * printScale + 1, factory.width * printScale + 1)
-        drawFactory(printCanvas, factory, currentDatePicker.value, printScale)
+        drawFactory(printCanvas, factory, currentDatePicker.value, printScale, numbers = drawNumbers())
+        val gc = printCanvas.graphicsContext2D
         val printButton = Button()
         printButton.text = "Сохранить"
         printButton.setOnMouseClicked{
@@ -485,6 +491,35 @@ class FactoryController {
         createStage.isResizable = false
         createStage.show()
     }
+
+    private fun drawNumbers(): List<NumberForPng>{
+        val currentDateObjects = FXCollections.observableList(factory.objects.filter {
+            it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
+        })
+        val numbers = mutableListOf<NumberForPng>()
+        var i = 1
+        currentDateObjects.forEach{
+            val coordinates = it.first.coordinates
+            val x = ((coordinates.minOf { coordinate ->
+                coordinate.x
+            } + coordinates.maxOf { coordinate ->
+                coordinate.x
+            }) / 2.0 + it.second.x)
+            val y = ((coordinates.minOf { coordinate ->
+                coordinate.y
+            } + coordinates.maxOf { coordinate ->
+                coordinate.y
+            }) / 2.0 + it.second.y) + 1
+            val number = NumberForPng(i++, x, y)
+            numbers.add(number)
+        }
+        return numbers
+    }
+ /*   private fun createNumberObject(number: Int, x: Double, y: Double, gc: GraphicsContext){
+        gc.fill = Color.PURPLE
+        gc.font = Font(scaleMain/2)
+        gc.fillText(number.toString(), 100.0, 100.0)
+    }*/
 
     private fun saveAsPng(node: Node, stage: Window) = saveAsPng(node, stage, SnapshotParameters())
 
@@ -511,11 +546,12 @@ class FactoryController {
         val workbook = XSSFWorkbook()
         val spreadsheet: Sheet = workbook.createSheet("legend")
         var row: Row = spreadsheet.createRow(0)
-        row.createCell(0).setCellValue("Цвет")
-        row.createCell(1).setCellValue("Имя")
-        row.createCell(2).setCellValue("Начальная дата")
-        row.createCell(3).setCellValue("Конечная дата")
-        row.createCell(4).setCellValue("Площадь")
+        row.createCell(0).setCellValue("№")
+        row.createCell(1).setCellValue("Цвет")
+        row.createCell(2).setCellValue("Имя")
+        row.createCell(3).setCellValue("Начальная дата")
+        row.createCell(4).setCellValue("Конечная дата")
+        row.createCell(5).setCellValue("Площадь")
         val currentDateObjects = FXCollections.observableList(factory.objects.filter {
             it.first.dateStart <= currentDatePicker.value && it.first.dateEnd >= currentDatePicker.value
         })
@@ -539,18 +575,19 @@ class FactoryController {
                 } else i.first
 
                 row = spreadsheet.createRow(index)
-                row.createCell(0).cellStyle = style
-                row.createCell(1).setCellValue(i.first.name)
-                row.createCell(2).setCellValue(dateInfo(objForDate, true).toCustomString())
-                row.createCell(3).setCellValue(dateInfo(objForDate, false).toCustomString())
-                row.createCell(4).setCellValue(i.first.coordinates.size.toString())
+                row.createCell(0).setCellValue((index).toString())
+                row.createCell(1).cellStyle = style
+                row.createCell(2).setCellValue(i.first.name)
+                row.createCell(3).setCellValue(dateInfo(objForDate, true).toCustomString())
+                row.createCell(4).setCellValue(dateInfo(objForDate, false).toCustomString())
+                row.createCell(5).setCellValue(i.first.coordinates.size.toString())
                 index++
             }
         }
-        spreadsheet.autoSizeColumn(0)
         spreadsheet.autoSizeColumn(1)
         spreadsheet.autoSizeColumn(2)
         spreadsheet.autoSizeColumn(3)
+        spreadsheet.autoSizeColumn(4)
         row = spreadsheet.createRow(index)
         row.createCell(0).setCellValue("Цех: ${data.getFileName().split(".")[0].split("\\").last()}."
                 + " Дата: ${currentDatePicker.value.toCustomString()}"
