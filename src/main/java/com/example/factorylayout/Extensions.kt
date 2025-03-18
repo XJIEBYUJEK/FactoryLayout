@@ -135,3 +135,21 @@ fun LocalDate.toCustomString() =
             "${this.year}"
 
 fun Int.findFactoryObjectById(factory: Factory) = factory.objects.first { it.first.id == this }.first
+
+fun dateInfo(fo: FactoryObject, startDate: Boolean, factory: Factory): LocalDate{
+    return if(fo.childObjects.isNotEmpty()){
+        var minDate = fo.dateStart
+        var maxDate = fo.dateEnd
+        fo.childObjects.forEach { id ->
+            val childObject = id.findFactoryObjectById(factory)
+            if (minDate > childObject.dateStart) minDate = childObject.dateStart
+            if (maxDate < childObject.dateEnd) maxDate = childObject.dateEnd
+        }
+        if(startDate) minDate
+        else maxDate
+    }
+    else {
+        if(startDate) fo.dateStart
+        else fo.dateEnd
+    }
+}

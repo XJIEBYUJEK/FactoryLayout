@@ -3,6 +3,7 @@ package com.example.factorylayout.controller
 import com.example.factorylayout.*
 import com.example.factorylayout.data.SingletonData
 import com.example.factorylayout.factory.FactoryObjectCellFactory
+import com.example.factorylayout.factory.FactoryObjectsTableCellFactory
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.model.NumberForPng
@@ -42,6 +43,9 @@ import kotlin.math.min
 
 
 class FactoryController {
+
+    @FXML
+    lateinit var objectsTable: ListView<Pair<FactoryObject, Coordinate>>
 
     @FXML
     lateinit var canvasBorderPane: BorderPane
@@ -247,6 +251,9 @@ class FactoryController {
             val pair = listView.items[index]
             infoTextField.text = objectInfoText(pair.first)
         }
+
+        objectsTable.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null })
+        objectsTable.setCellFactory { FactoryObjectsTableCellFactory(factory) }
     }
 
     private fun factoryMapSetup(){
@@ -413,24 +420,6 @@ class FactoryController {
         } else "${fo.objectArea()}"
     }
 
-    private fun dateInfo(fo: FactoryObject, startDate: Boolean): LocalDate{
-        return if(fo.childObjects.isNotEmpty()){
-            var minDate = fo.dateStart
-            var maxDate = fo.dateEnd
-            fo.childObjects.forEach { id ->
-                val childObject = id.findFactoryObjectById(factory)
-                if (minDate > childObject.dateStart) minDate = childObject.dateStart
-                if (maxDate < childObject.dateEnd) maxDate = childObject.dateEnd
-            }
-            if(startDate) minDate
-            else maxDate
-        }
-        else {
-            if(startDate) fo.dateStart
-            else fo.dateEnd
-        }
-    }
-
     fun onScrollCanvas(scrollEvent: ScrollEvent) {
         /*if(scrollEvent.deltaY < 0){
             if (scale != 150.0) scale++
@@ -442,8 +431,8 @@ class FactoryController {
     }
 
     private fun objectInfoText(fo: FactoryObject): String = "Имя: ${fo.name}\n" +
-            "Начальная дата:\n ${dateInfo(fo, true).toCustomString()}\n" +
-            "Конечная дата:\n ${dateInfo(fo, false).toCustomString()}\n" +
+            "Начальная дата:\n ${dateInfo(fo, true, factory).toCustomString()}\n" +
+            "Конечная дата:\n ${dateInfo(fo, false, factory).toCustomString()}\n" +
             "Площадь:\n ${areaInfoText(fo)} м²"
 
     private fun allObjectsArea(date: LocalDate): Int{
@@ -578,8 +567,8 @@ class FactoryController {
                 row.createCell(0).setCellValue((index).toString())
                 row.createCell(1).cellStyle = style
                 row.createCell(2).setCellValue(i.first.name)
-                row.createCell(3).setCellValue(dateInfo(objForDate, true).toCustomString())
-                row.createCell(4).setCellValue(dateInfo(objForDate, false).toCustomString())
+                row.createCell(3).setCellValue(dateInfo(objForDate, true, factory).toCustomString())
+                row.createCell(4).setCellValue(dateInfo(objForDate, false, factory).toCustomString())
                 row.createCell(5).setCellValue(i.first.coordinates.size.toString())
                 index++
             }
@@ -598,4 +587,14 @@ class FactoryController {
     }
 
     private fun updateSlider(isVisible: Boolean) = updateSlider(isVisible, dateSlider, startDatePicker, endDatePicker, currentDatePicker)
+    fun onObjectsClick() {
+        if (!objectsTable.isVisible){
+            objectsTable.isVisible = true
+            canvas.isVisible = false
+        }
+        else{
+            objectsTable.isVisible = false
+            canvas.isVisible = true
+        }
+    }
 }
