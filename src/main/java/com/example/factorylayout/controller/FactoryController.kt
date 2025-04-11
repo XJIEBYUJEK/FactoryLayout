@@ -7,15 +7,19 @@ import com.example.factorylayout.factory.FactoryObjectsTableCellFactory
 import com.example.factorylayout.model.Coordinate
 import com.example.factorylayout.model.FactoryObject
 import com.example.factorylayout.model.NumberForPng
+import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.embed.swing.SwingFXUtils
+import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.*
+import javafx.scene.Node
+import javafx.scene.Parent
+import javafx.scene.Scene
+import javafx.scene.SnapshotParameters
 import javafx.scene.canvas.Canvas
-import javafx.scene.canvas.GraphicsContext
 import javafx.scene.control.*
 import javafx.scene.image.WritableImage
 import javafx.scene.input.MouseEvent
@@ -23,12 +27,14 @@ import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
-import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.stage.FileChooser
 import javafx.stage.Stage
 import javafx.stage.Window
-import org.apache.poi.ss.usermodel.*
+import javafx.stage.WindowEvent
+import org.apache.poi.ss.usermodel.FillPatternType
+import org.apache.poi.ss.usermodel.Row
+import org.apache.poi.ss.usermodel.Sheet
 import org.apache.poi.xssf.usermodel.XSSFCellStyle
 import org.apache.poi.xssf.usermodel.XSSFColor
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
@@ -96,6 +102,44 @@ class FactoryController {
 
     private var scaleMain = 10.0
 
+    private fun setStageCloseRequest() {
+        val stage = this.canvas.scene.window as Stage
+        stage.onCloseRequest = EventHandler { event: WindowEvent ->
+            handleCloseRequest(stage, event)
+        }
+    }
+
+    private fun handleCloseRequest(stage: Stage, event: WindowEvent) {
+        event.consume()
+
+        Platform.runLater {
+            val alert = Alert(Alert.AlertType.CONFIRMATION)
+            alert.initOwner(stage)
+            alert.title = "Выход"
+            alert.headerText = "Вы уверены, что хотите выйти?"
+            alert.contentText = "Все несохранённые данные будут потеряны."
+
+            val saveAndExitButton = ButtonType("Сохранить и выйти")
+            val exitButton = ButtonType("Выйти", ButtonBar.ButtonData.OK_DONE)
+            val cancelButton = ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE)
+
+            alert.buttonTypes.setAll(saveAndExitButton, exitButton, cancelButton)
+
+            val result = alert.showAndWait()
+            val selectedButton = result.orElse(cancelButton)
+
+            when (selectedButton) {
+                saveAndExitButton -> {
+                    onSaveButtonClick()
+                    stage.close()
+                }
+                exitButton -> stage.close()
+                cancelButton -> {}
+                else -> {}
+            }
+        }
+    }
+
     @FXML
     fun initialize() {
         textFieldSetup()
@@ -103,6 +147,9 @@ class FactoryController {
         listObjectsSetup()
         factoryMapSetup()
         checkErrors()
+        Platform.runLater{
+            setStageCloseRequest()
+        }
     }
 
     fun onBackPressed() {
