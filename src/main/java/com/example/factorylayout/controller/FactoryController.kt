@@ -252,7 +252,9 @@ class FactoryController {
             infoTextField.text = objectInfoText(pair.first)
         }
 
-        objectsTable.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null })
+        objectsTable.items = FXCollections.observableList(factory.objects.filter { it.first.parentObject == null }.sortedBy {
+            dateInfo(it.first, true, factory)
+        })
         objectsTable.setCellFactory { FactoryObjectsTableCellFactory(factory, currentDatePicker.value) }
         objectsTable.setOnMouseClicked {
             val index = objectsTable.selectionModel.selectedIndex

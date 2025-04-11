@@ -42,9 +42,10 @@ class FactoryObjectsTableCellFactory(private val factory: Factory, private val c
                 alignment = Pos.CENTER
             }
             val warningMsg = when((dateInfo(item.first, false, factory).toEpochDay() - currentDate.toEpochDay())){
-                2L -> "Истекает через 3 дня"
-                1L -> "Истекает через 2 дня"
-                0L -> "Истекает через 1 день"
+                3L -> "Истекает через 3 дня"
+                2L -> "Истекает через 2 дня"
+                1L -> "Истекает через 1 день"
+                0L -> "Истекает сегодня"
                 else -> ""
             }
             val warning = Label(warningMsg).apply {
